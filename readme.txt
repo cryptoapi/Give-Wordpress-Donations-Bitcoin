@@ -1,7 +1,7 @@
 === Give - Democratizing Generosity ===
 Contributors: wordimpress, dlocc, webdevmattcrom
 Donate link: http://givewp.com/
-Tags: donations, donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving
+Tags: donations, donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving, charity, donate, gifts, non-profit, paypal, stripe, churches, nonprofit, reports, reporting
 Requires at least: 3.8
 Tested up to: 4.1.1
 Stable tag: 0.8
