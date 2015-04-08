@@ -46,7 +46,7 @@ For new users, we suggest reviewing our [documentation](https://givewp.com/docum
 
 = Zero Commission Charges =
 
-We earn money by selling Add-ons, not from your Mission. Raised dollars go to support you cause. Period. Add-ons are premium features that enable you to extend the functionality of Give. For example, you accept funds through your favorite gate
+We earn money by selling Add-ons, not from your Mission. Raised dollars go to support your cause. Period. Add-ons are premium features that enable you to extend the functionality of Give. For example, you can accept funds through your favorite gateway or integrate with your favorite payment gateway.
 
 = Easy to Customize and Enhance =
 
