@@ -8,13 +8,29 @@ Stable tag: 0.8
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
-Democratizing Generosity - Empower your cause; start accepting donations with WordPress via Give.
+Democratizing Generosity - Empower your cause: start accepting donations on WordPress with Give.
 
 == Description ==
 
-**[Give's](https://givewp.com "Visit the the Give website")** aim is to Democratize Generosity. Give is the most robust WordPress plugin available for accepting donations. Upon activation, Give provides you with powerful features  towards helping your raise more funds for your cause.
+**[Give's](https://givewp.com "Visit the the Give website")** goal is to "Democratize Generosity". Give is the most robust WordPress plugin available for accepting donations. Upon activation, Give provides you with powerful features  towards helping your raise more funds for your cause.
 
 [youtube https://www.youtube.com/watch?v=gNdEelhjoKE]
+
+= Features Include: =
+
+* Simple and pain free giving
+* Zero commission charges
+* Own all your donation data
+* Accept Single, Custom, and Multi-level donations
+* Easy to customize and enhance
+* Robust reporting features
+* Customizable emails
+* PayPal Standard and Offline Payments
+* Custom user roles
+* Dedicated support and development
+* ... and much more!
+
+Find out more on the **[Give website](https://givewp.com "Visit the the Give website")**.
 
 = Why Give? =
 
