@@ -56,6 +56,7 @@ Give is built by [WordImpress](http://wordimpress.com "Visit the the developers 
 
 Stay in touch with us for important plugin news and updates:
 
+* **[Give Website](https://givewp.com "Visit the the Give website")**
 * **[Newsletter](http://eepurl.com/bggG99 "Subscribe via MailChimp")**
 * **[Facebook](http://facebook.com/wpgive "Visit the Give on Facebook")**
 * **[GitHub](https://github.com/WordImpress/Give "Visit the the developers of Give - WordImpress")**
