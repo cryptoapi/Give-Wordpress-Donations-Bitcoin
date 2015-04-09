@@ -66,6 +66,22 @@ Stay in touch with us for important plugin news and updates:
 
 This plugin is open source and we're always looking for more contributors. Whether you know another language, can code like no ones business, or just have an idea, we would love your help and input. To contribute to Give please head over to our website or view/fork/watch the GitHub repository to learn more about what issues we're tackling and about the project.
 
+= A Tribute to Open Source =
+
+*"Open source software is software that can be freely used, changed, and shared (in modified or unmodified form) by anyone. Open source software is made by many people, and distributed under licenses that comply with the Open Source Definition."*
+
+**~ The Open Source Initiative**
+
+Give is a tribute to the spirit and philosophy of Open Source. We at WordImpress gladly embrace the Open Source philosophy both in how Give itself was developed, and how we hope to see others build more from our code base.
+
+Give would not have been possible without the tireless efforts of these Open Source projects and their talented developers:
+
+* Pippin Williamson and his wonderful development team, Easy Digital Downloads
+* Mike Jolley and the whole WooThemes Team, WooCommerce
+* Carl Hancock and his entire crew, Gravity Forms
+* Joost De Valk and the Yoast team, WordPress SEO
+* Justin Sternberg and the whole WebDevStudios team, CMB2
+
 == Installation ==
 
 = Minimum Requirements =
