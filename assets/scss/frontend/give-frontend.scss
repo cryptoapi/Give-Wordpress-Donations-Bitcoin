@@ -1,0 +1,16 @@
+/*!
+ * Give Frontend SCSS/CSS
+ *
+ * @description: The Main SCSS file for FRONTEND styles which is compiled and minified via Gulp taskrunner
+ * @package:     Give
+ * @subpackage:  SCSS/Frontend
+ * @copyright:   Copyright (c) 2015, WordImpress
+ * @license:     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+*/
+@import '_variables';
+@import '_mixins';
+@import 'fonts';
+@import 'jquery-qtip';
+@import 'receipt';
+@import 'forms';
+@import 'magnific';
