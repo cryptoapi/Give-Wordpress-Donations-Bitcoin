@@ -5,7 +5,7 @@
  * Description: The most robust, flexible, and intuitive way to accept donations on WordPress.
  * Author: WordImpress
  * Author URI: http://wordimpress.com
- * Version: 0.8 beta
+ * Version: 0.8.5 beta
  * Text Domain: give
  * Domain Path: /languages
  *
@@ -155,7 +155,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 
 			// Plugin version
 			if ( ! defined( 'GIVE_VERSION' ) ) {
-				define( 'GIVE_VERSION', '0.8' );
+				define( 'GIVE_VERSION', '0.8.5' );
 			}
 
 			// Plugin Folder Path
@@ -254,14 +254,12 @@ if ( ! class_exists( 'Give' ) ) : /**
 
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/actions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/payments-history.php';
-				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/contextual-help.php';
 
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/functions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/metabox.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/dashboard-columns.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/shortcode.php';
 
-				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/contextual-help.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/reports.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/pdf-reports.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/class-give-graph.php';

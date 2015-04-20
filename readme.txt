@@ -4,7 +4,7 @@ Donate link: http://givewp.com/
 Tags: donations, donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving, charity, donate, gifts, non-profit, paypal, stripe, churches, nonprofit, reports, reporting
 Requires at least: 3.8
 Tested up to: 4.1.1
-Stable tag: 0.8
+Stable tag: 0.8.5
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -46,7 +46,7 @@ For new users, we suggest reviewing our [documentation](https://givewp.com/docum
 
 = Zero Commission Charges =
 
-We earn money by selling Add-ons, not from your Mission. Raised dollars go to support your cause. Period. Add-ons are premium features that enable you to extend the functionality of Give. For example, you can accept funds through your favorite gateway or integrate with your favorite payment gateway.
+We earn money by selling add-ons. The money you raise using Give is yours to go to support your cause. Period. Add-ons are premium features that enable you to extend the functionality of Give. For example, you use one of our add-ons to accept funds through your favorite payment gateway.
 
 = Easy to Customize and Enhance =
 
@@ -68,13 +68,13 @@ This plugin is open source and we're always looking for more contributors. Wheth
 
 = A Tribute to Open Source =
 
-*"Open source software is software that can be freely used, changed, and shared (in modified or unmodified form) by anyone. Open source software is made by many people, and distributed under licenses that comply with the Open Source Definition."*
+*"Open source software is software that can be freely used, changed, and shared (in modified or unmodified form) by anyone. Open source software is made by many people, and distributed under licenses that comply with the open source Definition."*
 
 **~ The Open Source Initiative**
 
-Give is a tribute to the spirit and philosophy of Open Source. We at WordImpress gladly embrace the Open Source philosophy both in how Give itself was developed, and how we hope to see others build more from our code base.
+Give is a tribute to the spirit and philosophy of open source. We at WordImpress gladly embrace the open source philosophy both in how Give itself was developed, and how we hope to see others build more from our code base.
 
-Give would not have been possible without the tireless efforts of these Open Source projects and their talented developers:
+Give would not have been possible without the tireless efforts of these open source projects and their talented developers:
 
 * Pippin Williamson and his wonderful development team, Easy Digital Downloads
 * Mike Jolley and the whole WooThemes Team, WooCommerce
@@ -88,12 +88,12 @@ Give would not have been possible without the tireless efforts of these Open Sou
 
 * WordPress 3.8 or greater
 * PHP version 5.3 or greater
-* MySQL version 5.0 or greater
+* MySQL version 5.0.15 or greater
 * Some payment gateways require fsockopen support (for IPN access)
 
 = Automatic installation =
 
-Automatic installation is the easiest option as WordPress handles the file transfers itself and you don't need to leave your web browser. To do an automatic install of Give, log in to your WordPress dashboard, navigate to the Plugins menu and click Add New.
+Automatic installation is the easiest option as WordPress handles the file transfers itself and you don't need to leave your web browser. To do an automatic install of Give, log in to your WordPress dashboard, navigate to the Plugins menu and click "Add New".
 
 In the search field type "Give" and click Search Plugins. Once you have found the plugin you can view details about it such as the the point release, rating and description. Most importantly of course, you can install it by simply clicking "Install Now".
 
@@ -113,7 +113,7 @@ First off, we love Gravity Forms. It's a great plugin and has a lot of good feat
 
 = How is Give better than *WooCommerce* for accepting donations on WordPress? =
 
-We also really like WooCommerce. It's hands-down the most robust eCommerce platform for WordPress. But that's also the issue. Typically you don't need a cart system, shipping, or tax calculations to accept donations. On top of that, customizing the plugin's terminology is a daunting task. You never want your users to receive an "invoice" for the donation "product" they "purchased". Rather, you'd like for them to receive a receipt for the donation they gave. WooCommerce can do donations, but it isn't what it does best.
+We also really like WooCommerce. It's hands-down the most robust eCommerce platform for WordPress. But that's also the issue. Typically you don't need a cart system, shipping, or tax calculations to accept donations. On top of that, customizing the plugin's terminology is a daunting task. You never want your users to receive an "invoice" for the donation "product" they "purchased". Rather, you'd like for them to receive a receipt for the donation they gave. WooCommerce can do donations, but that's not what it was designed for.
 
 == Screenshots ==
 
@@ -131,7 +131,21 @@ Version 0.8 is the first release of Give. It's still in beta version so if you f
 
 == Changelog ==
 
+= 0.8.5 beta =
+
+* Fix: Global vs Form Payment Gateways https://github.com/WordImpress/Give/issues/86
+* Fix: Setting Section Title Not Displaying Proper Text https://github.com/WordImpress/Give/issues/87
+* Fix: Prefixed "icon" and "icon-question" classes to mitigate conflicts: https://github.com/WordImpress/Give/issues/103
+* Fix: {name} isn't correctly rendered in test email: https://github.com/WordImpress/Give/issues/100 - Thanks @sumobi
+* Fix: When exporting a report, apostrophe's are not correctly shown: https://github.com/WordImpress/Give/issues/96 - Thanks @sumobi
+* Fix: PHP warning when exporting PDF: https://github.com/WordImpress/Give/issues/93 - Thanks @sumobi
+* Fix: Property of non-object on Forms Report: https://github.com/WordImpress/Give/issues/91 - Thanks @pippinsplugins
+* Fix: PHP Notice: Undefined variable: unlimited: https://github.com/WordImpress/Give/issues/89 - Thanks @sumobi
+* Fix: Prefix .icon class to prevent conflicts #103: https://github.com/WordImpress/Give/issues/103 - Thanks @stevengliebe
+* Update: Removed unnecessary contextual help files until we decide how we are going to approach this with the plugin
+* Update: Inline code comments improved to be more specific to Give - some were incorrectly describing old EDD functionality
+* Security: Hardened URLs with esc_url() across the plugin core
+
 = 0.8 beta =
 
 * Initial plugin release. Yippee!
-
