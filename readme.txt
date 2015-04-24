@@ -1,10 +1,10 @@
-=== Give - Democratizing Generosity ===
+=== Give - Donation Plugin ===
 Contributors: wordimpress, dlocc, webdevmattcrom
 Donate link: http://givewp.com/
-Tags: donations, donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving, charity, donate, gifts, non-profit, paypal, stripe, churches, nonprofit, reports, reporting
+Tags: donation, donations, donation plugin, wordpress donation plugin, wp donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving, charity, donate, gifts, non-profit, paypal, stripe, churches, nonprofit, reports, reporting
 Requires at least: 3.8
-Tested up to: 4.1.1
-Stable tag: 0.8.5
+Tested up to: 4.2
+Stable tag: 0.8.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -131,8 +131,12 @@ Version 0.8 is the first release of Give. It's still in beta version so if you f
 
 == Changelog ==
 
-= 0.8.5 beta =
+= 0.8.6 beta =
+* New: Option to "Disable Welcome Screen" added to Settings > Display Options for those users to set if they don't want a welcome screen appearing
+* Fix: Updated install process to fix #114 - https://github.com/WordImpress/Give/issues/114 - Thanks @paaljoachim
+* Fix: Permissions bug with edit_give_payments within admin/payments/actions.php and within the class-give-roles.php preventing admins of new installs from deleting donations - Thanks @jakestpeter
 
+= 0.8.5 beta =
 * Fix: Global vs Form Payment Gateways https://github.com/WordImpress/Give/issues/86
 * Fix: Setting Section Title Not Displaying Proper Text https://github.com/WordImpress/Give/issues/87
 * Fix: Prefixed "icon" and "icon-question" classes to mitigate conflicts: https://github.com/WordImpress/Give/issues/103

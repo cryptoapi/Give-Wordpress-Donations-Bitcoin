@@ -41,8 +41,9 @@ function give_install() {
 	// Current Version (if set)
 	$current_version = get_option( 'give_version' );
 
-	// Checks if the Success Page option exists
-	if ( ! isset( $give_options['success_page'] ) ) {
+
+	// Checks if the Success Page option exists AND that the page exists
+	if ( ! isset( $give_options['success_page'] ) || ! get_post( $give_options['success_page'] ) ) {
 
 		// Purchase Confirmation (Success) Page
 		$success = wp_insert_post(
@@ -56,6 +57,14 @@ function give_install() {
 			)
 		);
 
+		// Store our page IDs
+		$options['success_page'] = $success;
+	}
+
+
+	// Checks if the Failure Page option exists AND that the page exists
+	if ( ! isset( $give_options['failure_page'] ) || ! get_post( $give_options['failure_page'] ) ) {
+
 		// Failed Purchase Page
 		$failed = wp_insert_post(
 			array(
@@ -68,6 +77,12 @@ function give_install() {
 			)
 		);
 
+		$options['failure_page'] = $failed;
+	}
+
+
+	// Checks if the History Page option exists AND that the page exists
+	if ( ! isset( $give_options['history_page'] ) || ! get_post( $give_options['history_page'] ) ) {
 		// Purchase History (History) Page
 		$history = wp_insert_post(
 			array(
@@ -80,13 +95,9 @@ function give_install() {
 			)
 		);
 
-		// Store our page IDs
-		$options['success_page'] = $success;
-		$options['failure_page'] = $failed;
 		$options['history_page'] = $history;
-
-
 	}
+
 
 	//Fresh Install? Setup Test Mode, Base Country (US), Test Gateway
 	if ( empty( $current_version ) ) {
@@ -103,23 +114,19 @@ function give_install() {
 		$options['donation_notification'] = give_get_default_donation_notification_email();
 	}
 
-
 	// Populate some default values
 	update_option( 'give_settings', array_merge( $give_options, $options ) );
 	update_option( 'give_version', GIVE_VERSION );
-
 
 	//Update Version Number
 	if ( $current_version ) {
 		update_option( 'give_version_upgraded_from', $current_version );
 	}
 
-
 	// Create Give roles
 	$roles = new Give_Roles();
 	$roles->add_roles();
 	$roles->add_caps();
-
 
 	// Add a temporary option to note that Give pages have been created
 	set_transient( '_give_installed', $options, 30 );
