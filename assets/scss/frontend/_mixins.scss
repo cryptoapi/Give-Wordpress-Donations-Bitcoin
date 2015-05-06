@@ -1,0 +1,114 @@
+/**
+ * Clearfix
+ */
+@mixin clearfix() {
+  *zoom: 1;
+
+  &:before,
+  &:after {
+	content: " ";
+	display: table;
+  }
+
+  &:after {
+	clear: both;
+  }
+}
+
+.give-clearfix {
+  @include clearfix;
+}
+
+/**
+ * Box Sizing
+ * https://github.com/timrogers/sass-box-sizing-mixin
+ */
+@mixin box-sizing($box-model) {
+  -webkit-box-sizing: $box-model; // Safari <= 5
+  -moz-box-sizing: $box-model; // Firefox <= 19
+  box-sizing: $box-model;
+}
+
+/**
+ * CSS3 Easing
+ */
+@mixin easing-transition() {
+  -moz-transition: 0.2s all linear;
+  -o-transition: 0.2s all linear;
+  transition: 0.2s all linear;
+}
+
+//Swingin' Loader (from Woo 2.3)
+@mixin loader() {
+  &:before {
+	height: 1em;
+	width: 1em;
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-left: -.5em;
+	margin-top: -.5em;
+	display: block;
+	-webkit-animation: spin 1s ease-in-out infinite;
+	-moz-animation: spin 1s ease-in-out infinite;
+	animation: spin 1s ease-in-out infinite;
+	content: "";
+	background: url(../images/loader.svg) center center;
+	background-size: cover;
+	line-height: 1;
+	text-align: center;
+	font-size: 2em;
+	color: rgba(#000, 0.75);
+  }
+}
+
+//Labels
+@mixin give-label() {
+  padding: .2em .6em .3em;
+  font-size: 85%;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25em;
+}
+
+@mixin give-label-gray() {
+  background-color: #929292;
+}
+
+.give-item-label {
+  @include give-label();
+}
+
+.give-item-label-gray {
+  @include give-label-gray();
+}
+
+//Fields
+@mixin give-currency() {
+  background-color: lighten($light-gray, 2%);
+  border-top: 1px solid $borders;
+  border-bottom: 1px solid $borders;
+  margin: 0;
+  padding: 0 12px;
+  float: left;
+  height: 35px;
+  line-height: 35px;
+  font-size: $font-size-medium;
+  @include box-sizing(border-box);
+}
+
+@mixin give-input() {
+  float: left;
+  border: 1px solid $borders;
+  border-radius: 0;
+  height: 35px;
+  line-height: 35px;
+  padding: 0 12px;
+  font-size: $font-size-medium;
+  @include box-sizing(border-box);
+}
