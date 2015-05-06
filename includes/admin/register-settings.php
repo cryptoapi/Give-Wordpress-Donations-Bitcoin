@@ -78,7 +78,7 @@ class Give_Plugin_Settings {
 	 */
 	public function give_update_cmb_meta_box_url( $url ) {
 		//Path to Give's CMB
-		return plugin_dir_url( __FILE__ ) . 'libraries/cmb2';
+		return GIVE_PLUGIN_URL. '/includes/libraries/cmb2';
 	}
 
 
@@ -105,6 +105,8 @@ class Give_Plugin_Settings {
 		if ( ! empty( $settings['licenses']['fields'] ) ) {
 			$tabs['licenses'] = __( 'Licenses', 'give' );
 		}
+
+		$tabs['advanced'] = __( 'Advanced', 'give' );
 
 		$tabs['system_info'] = __( 'System Info', 'give' );
 
@@ -305,6 +307,17 @@ class Give_Plugin_Settings {
 							'type' => 'text',
 						),
 						array(
+							'name'    => __( 'PayPal ', 'give' ),
+							'desc'    => __( 'Nonprofits must verify their status to withdraw donations they receive via PayPal. PayPal users that are not verified nonprofits must demonstrate how their donations will be used, once they raise more than $10,000. By default, Give transactions are sent to PayPal as donations. You may change the transaction type using this option if you feel you may not meet PayPal\'s donation requirements.', 'give' ),
+							'id'      => 'paypal_button_type',
+							'type'    => 'radio_inline',
+							'options' => array(
+								'donation' => __( 'Donation', 'give' ),
+								'standard' => __( 'Standard Transaction', 'give' )
+							),
+							'default' => 'donation',
+						),
+						array(
 							'name' => __( 'Disable PayPal IPN Verification', 'give' ),
 							'desc' => __( 'If donations are not getting marked as complete, then check this box. This forces the site to use a slightly less secure method of verifying donations.', 'give' ),
 							'id'   => 'disable_paypal_verification',
@@ -317,7 +330,13 @@ class Give_Plugin_Settings {
 							'id'   => 'give_title_gateway_settings_3',
 						),
 						array(
-							'name'    => __( 'Global Offline Donation Text', 'give' ),
+							'name' => __( 'Collect Billing Details', 'give' ),
+							'desc' => __( 'This option will enable the billing details section for offline donations. The fieldset will appear above the offline donation instructions. Note: You may customize this option per form as needed.', 'give' ),
+							'id'   => 'give_offline_donation_enable_billing_fields',
+							'type' => 'checkbox'
+						),
+						array(
+							'name'    => __( 'Offline Donation Text', 'give' ),
 							'desc'    => __( 'The following content will appear for all forms when the user selects the offline donation payment option. Note: You may customize the content per form as needed.', 'give' ),
 							'id'      => 'global_offline_donation_content',
 							'default' => give_get_default_offline_donation_content(),
@@ -349,7 +368,7 @@ class Give_Plugin_Settings {
 						),
 						array(
 							'name' => __( 'Disable Welcome Screen', 'give' ),
-							'desc' => sprintf( __( 'Enable this option if you would like to disable the Give Welcome screen every time Give is activated and/or updated. You can always access the Welcome Screen <a href="%s">here</a> if you want in the future.','give'), esc_url( admin_url('index.php?page=give-about') ) ),
+							'desc' => sprintf( __( 'Enable this option if you would like to disable the Give Welcome screen every time Give is activated and/or updated. You can always access the Welcome Screen <a href="%s">here</a> if you want in the future.', 'give' ), esc_url( admin_url( 'index.php?page=give-about' ) ) ),
 							'id'   => 'disable_welcome',
 							'type' => 'checkbox'
 						),
@@ -360,15 +379,27 @@ class Give_Plugin_Settings {
 							'type' => 'give_title'
 						),
 						array(
-							'name' => __( 'Disable Form\'s Single View', 'give' ),
+							'name' => __( 'Disable Form Single Views', 'give' ),
 							'desc' => __( 'By default, all forms have single views enabled which create a specific URL on your website for that form. This option disables the singular and archive views from being publicly viewable. Note: you will need to embed forms using a shortcode or widget if enabled.', 'give' ),
 							'id'   => 'disable_forms_singular',
 							'type' => 'checkbox'
 						),
 						array(
-							'name' => __( 'Disable Form\'s Archives', 'give' ),
+							'name' => __( 'Disable Form Archives', 'give' ),
 							'desc' => __( 'Archives pages list all the forms you have created. This option will disable only the form\'s archive page(s). The single form\'s view will remain in place. Note: you will need to refresh your permalinks after this option has been enabled.', 'give' ),
 							'id'   => 'disable_forms_archives',
+							'type' => 'checkbox'
+						),
+						array(
+							'name' => __( 'Disable Form Excerpts', 'give' ),
+							'desc' => __( 'The excerpt is an optional summary or description of a donation form; in short, a summary as to why the user should give.', 'give' ),
+							'id'   => 'disable_forms_excerpt',
+							'type' => 'checkbox'
+						),
+						array(
+							'name' => __( 'Disable Form Featured Image', 'give' ),
+							'desc' => __( 'The Featured Image is an image that is chosen as the representative image for donation form. The display of this image is largely up to the theme. If you do not wish to use the featured image you can disable it using this option.', 'give' ),
+							'id'   => 'disable_form_featured_img',
 							'type' => 'checkbox'
 						),
 						array(
@@ -504,6 +535,33 @@ class Give_Plugin_Settings {
 				'give_title' => __( 'Give Licenses', 'give' ),
 				'show_on'    => array( 'key' => 'options-page', 'value' => array( $this->key, ), ),
 				'fields'     => apply_filters( 'give_settings_licenses', array()
+				)
+			),
+			/** Advanced Options */
+			'advanced'    => array(
+				'id'         => 'options_page',
+				'give_title' => __( 'Advanced Options', 'give' ),
+				'show_on'    => array( 'key' => 'options-page', 'value' => array( $this->key, ), ),
+				'fields'     => apply_filters( 'give_settings_advanced', array(
+						array(
+							'name' => __( 'Session Control', 'give' ),
+							'desc' => '<hr>',
+							'id'   => 'give_title_session_control_1',
+							'type' => 'give_title'
+						),
+						array(
+							'id'      => 'session_lifetime',
+							'name'    => __( 'Session Lifetime', 'give' ),
+							'desc'    => __( 'Give will start a new session per user once they have donated. This option controls the lifetime a user\'s session is kept alive. An active session allows users to view donation receipts on your site without having to be logged in.', 'give' ),
+							'type'    => 'select',
+							'options' => array(
+								'86400'  => __( '24 Hours', 'give' ),
+								'172800' => __( '48 Hours', 'give' ),
+								'259200' => __( '72 Hours', 'give' ),
+								'604800' => __( '1 Week', 'give' ),
+							)
+						),
+					)
 				)
 			),
 			/** Licenses Settings */
@@ -816,4 +874,8 @@ function give_hook_callback( $args ) {
  *
  * Super important!
  */
-require_once GIVE_PLUGIN_DIR . '/includes/admin/libraries/cmb2/init.php';
+if ( file_exists( GIVE_PLUGIN_DIR . '/includes/libraries/cmb2/init.php' ) ) {
+	require_once GIVE_PLUGIN_DIR . '/includes/libraries/cmb2/init.php';
+} elseif ( file_exists( GIVE_PLUGIN_DIR . '/includes/libraries/CMB2/init.php' ) ) {
+	require_once GIVE_PLUGIN_DIR . '/includes/libraries/CMB2/init.php';
+}

@@ -3,8 +3,8 @@ Contributors: wordimpress, dlocc, webdevmattcrom
 Donate link: http://givewp.com/
 Tags: donation, donations, donation plugin, wordpress donation plugin, wp donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving, charity, donate, gifts, non-profit, paypal, stripe, churches, nonprofit, reports, reporting
 Requires at least: 3.8
-Tested up to: 4.2
-Stable tag: 0.8.6
+Tested up to: 4.2.1
+Stable tag: 0.9.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -130,6 +130,22 @@ We also really like WooCommerce. It's hands-down the most robust eCommerce platf
 Version 0.8 is the first release of Give. It's still in beta version so if you find any bugs or issues please let us know! Thanks for using Give.
 
 == Changelog ==
+
+= 0.9 beta =
+* New: Global options to disable the form excerpt and featured image found under Give > Settings > Display Options
+* New: Enable the billing details section for offline donations. The fieldset will appear above the offline donation instructions. Note: You may customize this option per form as needed. Per request https://github.com/WordImpress/Give/issues/26
+* New: Theme template compatibility updates for Flatsome, X Theme, and Avada, Twenty-*
+* New: Two new filters introduced give_default_wrapper_start and give_default_wrapper_end to modify template wrappers
+* New: PayPal Standard: Allow Option to Switch from Donations to Standard transactions https://github.com/WordImpress/Give/issues/121
+* New: Brazilian Portuguese Translation https://github.com/WordImpress/Give/issues/107
+* Update: CMB2 updated to latest
+* Update: CMB2 moved directories
+* Fix: Admin Multi-Level Amount Fields Not Passed through give_format_amount() https://github.com/WordImpress/Give/issues/65
+* Fix: Welcome screen CSS issue with WP 4.2+ https://github.com/WordImpress/Give/issues/119
+* Fix: Admin Form Creation: Custom Amount Text Field Won't Accept Empty Value https://github.com/WordImpress/Give/issues/72
+* Fix: Dollar sign in modal doesn't always work https://github.com/WordImpress/Give/issues/120
+* Fix: Reports > Logs > Payment Errors > View Transaction Details now opens properly in Thickbox modal - we weren't properly enqueuing thickbox styles and script in wp-admin
+* For complete details of release milestone please visit: https://github.com/WordImpress/Give/issues?q=milestone%3A%220.9+Release%22
 
 = 0.8.6 beta =
 * New: Option to "Disable Welcome Screen" added to Settings > Display Options for those users to set if they don't want a welcome screen appearing

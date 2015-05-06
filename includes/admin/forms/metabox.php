@@ -50,7 +50,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 				//Donation Option
 				array(
 					'name'        => __( 'Donation Option', 'give' ),
-					'description' => __( 'Do you want this form to have one set donation price or multiple levels?', 'give' ),
+					'description' => __( 'Would you like this form to have one set donation price or multiple levels (for example, $10 silver, $20 gold, $50 platinum)?', 'give' ),
 					'id'          => $prefix . 'price_option',
 					'type'        => 'radio_inline',
 					'default'     => 'set',
@@ -99,6 +99,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 							'attributes'   => array(
 								'placeholder' => give_format_amount( '0.00' ),
 							),
+							'before' => 'give_format_admin_multilevel_amount',
 						),
 						array(
 							'name'       => __( 'Text', 'give' ),
@@ -143,12 +144,12 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 				),
 				array(
 					'name'        => __( 'Custom Amount Text', 'give' ),
-					'description' => __( 'This text appears as a label above the custom amount field for single level forms. For multi-level forms the text will appear as it\'s own level. Leave this field blank to prevent it from displaying within your form.', 'give' ),
+					'description' => __( 'This text appears as a label next to the custom amount field for single level forms. For multi-level forms the text will appear as it\'s own level (ie button, radio, or select option). Leave this field blank to prevent it from displaying within your form.', 'give' ),
 					'id'          => $prefix . 'custom_amount_text',
 					'type'        => 'text',
-					'default'     => __( 'Give a Custom Amount', 'give' ),
 					'attributes'  => array(
-						'rows' => 3,
+						'rows'        => 3,
+						'placeholder' => __( 'Give a Custom Amount', 'give' ),
 					),
 				),
 			)
@@ -169,7 +170,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 				//Donation Option
 				array(
 					'name'        => __( 'Display Content', 'give' ),
-					'description' => __( 'Do you want to display content?', 'give' ),
+					'description' => __( 'Do you want to display content? If you select "Yes" a WYSIWYG editor will appear which you will be able to enter content to display above or below the form.', 'give' ),
 					'id'          => $prefix . 'content_option',
 					'type'        => 'select',
 					'options'     => apply_filters( 'give_forms_content_options_select', array(
@@ -204,7 +205,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 			'fields'       => apply_filters( 'give_forms_display_options_metabox_fields', array(
 					array(
 						'name'    => __( 'Payment Fields', 'give' ),
-						'desc'    => __( 'How would you like to display payment information for this form?', 'give' ),
+						'desc'    => __( 'How would you like to display payment information for this form? The "Show on Page" option will display the entire form when the page loads. "Reveal Upon Click" places a button below the donation fields and upon clicks slides into view the rest of the fields. "Modal Window Upon Click" is a similar option, rather than sliding into view the fields they will open in a shadow box or "modal" window.', 'give' ),
 						'id'      => $prefix . 'payment_display',
 						'type'    => 'select',
 						'options' => array(
@@ -234,7 +235,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					),
 					array(
 						'name' => __( 'Default Gateway', 'give' ),
-						'desc' => __( 'This is the gateway that will be selected by default. If this option is selected it will override the global setting.', 'give' ),
+						'desc' => __( 'By default, the gateway for this form will inherit the global default gateway (set under Give > Settings > Payment Gateways). This option allows you to customize the default gateway for this form only.', 'give' ),
 						'id'   => $prefix . 'default_gateway',
 						'type' => 'default_gateway'
 					),
@@ -246,7 +247,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					),
 					array(
 						'name'    => __( 'Register / Login Form', 'give' ),
-						'desc'    => __( 'Display the registration and login forms in the checkout section for non-logged-in users.', 'give' ),
+						'desc'    => __( 'Display the registration and login forms in the checkout section for non-logged-in users. Note: this option will not require users to register or log in prior to completing a donation. It simply determines whether the login and/or registration form are displayed on the checkout page.', 'give' ),
 						'id'      => $prefix . 'show_register_form',
 						'type'    => 'select',
 						'options' => array(
