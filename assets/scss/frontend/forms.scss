@@ -105,7 +105,7 @@ Gravatar List
 Base Form Styles
 --------------------------------------*/
 
-form[id*='give-form'] {
+form[id*='give-form'], #give-recurring-form, form.give-form {
   color: $dark;
   margin: 0 0 25px;
   padding: 0;
@@ -293,7 +293,7 @@ form[id*='give-form'] {
 Notices, Warnings & Errors
 -----------------------------------*/
 
-.give_error {
+.give_error, .give_success {
   position: relative;
   margin: 15px 0;
   background: #F9F9F9;
@@ -322,6 +322,27 @@ Notices, Warnings & Errors
 	text-shadow: 1px 1px rgba(0, 0, 0, 0.5);
 	content: '\f02d';
   }
+
+  &.give_warning {
+	border-color: $orange;
+
+	&:before {
+	  background-color: $orange;
+	  text-shadow: 1px 1px rgba(0, 0, 0, 0.1);
+	}
+
+  }
+}
+
+.give_success {
+  border-color: $green;
+
+  &:before {
+	background-color: $green;
+	content: '\e601';
+	text-shadow: 1px 1px rgba(0, 0, 0, 0.2);
+  }
+
 }
 
 /*---------------------------------
@@ -542,6 +563,14 @@ form[id*='give-form'] {
 	background-size: 20px 20px;
 	background-repeat: no-repeat;
 	background-color: transparent;
+  }
+
+  span.padlock:before {
+	content: '\e600';
+	display: inline-block;
+	-webkit-font-smoothing: antialiased;
+	font: normal 20px/1 'dashicons';
+	vertical-align: top;
   }
 
 }

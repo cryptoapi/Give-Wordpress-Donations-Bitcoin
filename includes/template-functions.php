@@ -177,7 +177,6 @@ function give_add_schema_microdata() {
  * Add Microdata to Give titles
  *
  * @since  1.0
- * @author Sunny Ratilal
  *
  * @param string $title Post Title
  * @param int    $id    Post ID
@@ -202,8 +201,7 @@ add_filter( 'the_title', 'give_microdata_title', 10, 2 );
 /**
  * Add Microdata to download description
  *
- * @since  1.5
- * @author Sunny Ratilal
+ * @since  1.0
  *
  * @param $content
  *
@@ -361,8 +359,9 @@ function give_get_placeholder_img_src() {
 }
 
 
-/** Global ****************************************************************/
-
+/**
+ * Global
+ */
 if ( ! function_exists( 'give_output_content_wrapper' ) ) {
 
 	/**
@@ -382,18 +381,9 @@ if ( ! function_exists( 'give_output_content_wrapper_end' ) ) {
 	}
 }
 
-if ( ! function_exists( 'give_get_sidebar' ) ) {
-
-	/**
-	 * Get the shop sidebar template.
-	 */
-	function give_get_sidebar() {
-		give_get_template_part( 'global/sidebar' );
-	}
-}
-
-
-/** Single Give Form ********************************************************/
+/**
+ * Single Give Form
+ */
 if ( ! function_exists( 'give_left_sidebar_pre_wrap' ) ) {
 	function give_left_sidebar_pre_wrap() {
 		echo apply_filters( 'give_left_sidebar_pre_wrap', '<div id="give-sidebar-left" class="give-sidebar give-single-form-sidebar-left">' );
@@ -404,6 +394,12 @@ if ( ! function_exists( 'give_left_sidebar_post_wrap' ) ) {
 		echo apply_filters( 'give_left_sidebar_post_wrap', '</div>' );
 	}
 }
+if ( ! function_exists( 'give_get_forms_sidebar' ) ) {
+	function give_get_forms_sidebar() {
+		give_get_template_part( 'single-give-form/sidebar' );
+	}
+}
+
 
 if ( ! function_exists( 'give_show_form_images' ) ) {
 
@@ -431,5 +427,14 @@ if ( ! function_exists( 'give_show_avatars' ) ) {
 	 */
 	function give_show_avatars() {
 		echo do_shortcode( '[give_donators_gravatars]' );
+	}
+}
+if( ! function_exists( 'give_show_goal_progress' ) ) {
+
+	/**
+	 * Output Donation Progress
+	 */
+	function give_show_goal_progress() {
+		give_get_template_part( 'single-give-form/goal-progress' );
 	}
 }

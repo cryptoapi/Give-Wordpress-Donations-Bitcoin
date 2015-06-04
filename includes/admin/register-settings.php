@@ -78,7 +78,7 @@ class Give_Plugin_Settings {
 	 */
 	public function give_update_cmb_meta_box_url( $url ) {
 		//Path to Give's CMB
-		return GIVE_PLUGIN_URL. '/includes/libraries/cmb2';
+		return GIVE_PLUGIN_URL . '/includes/libraries/cmb2';
 	}
 
 
@@ -336,7 +336,7 @@ class Give_Plugin_Settings {
 							'type' => 'checkbox'
 						),
 						array(
-							'name'    => __( 'Offline Donation Text', 'give' ),
+							'name'    => __( 'Offline Donation Instructions', 'give' ),
 							'desc'    => __( 'The following content will appear for all forms when the user selects the offline donation payment option. Note: You may customize the content per form as needed.', 'give' ),
 							'id'      => 'global_offline_donation_content',
 							'default' => give_get_default_offline_donation_content(),
@@ -345,6 +345,23 @@ class Give_Plugin_Settings {
 								'textarea_rows' => 6,
 							)
 						),
+						array(
+							'name'    => __( 'Offline Donation Email Instructions Subject', 'give' ),
+							'desc'    => __( 'Enter the subject line for the donation receipt email.', 'give' ),
+							'id'      => 'offline_donation_subject',
+							'default' => __( '{donation} - Offline Donation Instructions', 'give' ),
+							'type'    => 'text'
+						),
+						array(
+							'name'    => __( 'Offline Donation Email Instructions', 'give' ),
+							'desc'    => __( 'Enter the instructions you want emailed to the donor after they have submitted the donation form. Most likely this would include important information like mailing address and who to make the check out to.', 'give' ),
+							'id'      => 'global_offline_donation_email',
+							'default' => give_get_default_offline_donation_email_content(),
+							'type'    => 'wysiwyg',
+							'options' => array(
+								'textarea_rows' => 6,
+							)
+						)
 					)
 				)
 			),
@@ -561,6 +578,30 @@ class Give_Plugin_Settings {
 								'604800' => __( '1 Week', 'give' ),
 							)
 						),
+						array(
+							'name' => __( 'Data Control', 'give' ),
+							'desc' => '<hr>',
+							'id'   => 'give_title_data_control_2',
+							'type' => 'give_title'
+						),
+						array(
+							'name' => __( 'Remove All Data on Uninstall?', 'give' ),
+							'desc' => __( 'Check this box if you would like Give to completely remove all of its data when the plugin is deleted.', 'give' ),
+							'id'   => 'uninstall_on_delete',
+							'type' => 'checkbox'
+						),
+						array(
+							'name' => __( 'Filter Control', 'give' ),
+							'desc' => '<hr>',
+							'id'   => 'give_title_filter_control',
+							'type' => 'give_title'
+						),
+						array(
+							'name' => __( 'Disable <code>the_content</code> filter', 'give' ),
+							'desc' =>  sprintf( __( 'If you are seeing extra social buttons, related posts, or other unwanted elements appearing within your forms then you can disable WordPress\' content filter. <a href="%s" target="_blank">Learn more</a> about the_content filter.', 'give' ), esc_url( 'https://codex.wordpress.org/Plugin_API/Filter_Reference/the_content' ) ),
+							'id'   => 'disable_the_content_filter',
+							'type' => 'checkbox'
+						),
 					)
 				)
 			),
@@ -582,7 +623,7 @@ class Give_Plugin_Settings {
 		);
 
 		//Return all settings array if necessary
-		if ( $active_tab === null ) {
+		if ( $active_tab === null || ! isset( $give_settings[ $active_tab ] ) ) {
 			return apply_filters( 'give_registered_settings', $give_settings );
 		}
 

@@ -5,7 +5,7 @@
  * Description: The most robust, flexible, and intuitive way to accept donations on WordPress.
  * Author: WordImpress
  * Author URI: http://wordimpress.com
- * Version: 0.9.0 beta
+ * Version: 0.9.5 beta
  * Text Domain: give
  * Domain Path: /languages
  *
@@ -104,6 +104,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 				add_action( 'plugins_loaded', array( self::$instance, 'load_textdomain' ) );
 
 				self::$instance->includes();
+				self::$instance->roles              = new Give_Roles();
 				self::$instance->give_settings      = new Give_Plugin_Settings();
 				self::$instance->customers          = new Give_DB_Customers();
 				self::$instance->session            = new Give_Session();
@@ -121,7 +122,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 		 * Throw error on object clone
 		 *
 		 * The whole idea of the singleton design pattern is that there is a single
-		 * object therefore, we don't want the object to be cloned.
+		 * object, therefore we don't want the object to be cloned.
 		 *
 		 * @since  1.0
 		 * @access protected
@@ -155,7 +156,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 
 			// Plugin version
 			if ( ! defined( 'GIVE_VERSION' ) ) {
-				define( 'GIVE_VERSION', '0.9.0' );
+				define( 'GIVE_VERSION', '0.9.5' );
 			}
 
 			// Plugin Folder Path
@@ -255,7 +256,6 @@ if ( ! class_exists( 'Give' ) ) : /**
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/actions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/payments-history.php';
 
-				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/functions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/metabox.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/dashboard-columns.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/shortcode.php';
@@ -318,7 +318,7 @@ endif; // End if class_exists check
  * Example: <?php $give = Give(); ?>
  *
  * @since 1.0
- * @return object The one true Give Instance
+ * @return object - The one true Give Instance
  */
 function Give() {
 	return Give::instance();

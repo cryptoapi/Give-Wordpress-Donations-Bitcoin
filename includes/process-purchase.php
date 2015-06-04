@@ -68,10 +68,8 @@ function give_process_purchase_form() {
 
 	// Setup purchase information
 	$purchase_data = array(
-		'price'        => ( isset( $_POST['give-amount'] ) ? (float) apply_filters( 'give_donation_total', give_sanitize_amount( $_POST['give-amount'] ) ) : '0.00' ),
-		// Amount after taxes
+		'price'        => ( isset( $_POST['give-amount'] ) ? (float) apply_filters( 'give_donation_total', give_sanitize_amount( give_format_amount($_POST['give-amount'] )) ) : '0.00' ),
 		'purchase_key' => strtolower( md5( $user['user_email'] . date( 'Y-m-d H:i:s' ) . $auth_key . uniqid( 'give', true ) ) ),
-		// Unique key
 		'user_email'   => $user['user_email'],
 		'date'         => date( 'Y-m-d H:i:s', current_time( 'timestamp' ) ),
 		'user_info'    => stripslashes_deep( $user_info ),
@@ -490,7 +488,7 @@ function give_purchase_form_validate_user_login() {
 					'password_incorrect',
 					sprintf(
 						__( 'The password you entered is incorrect. %sReset Password%s', 'give' ),
-						'<a href="' . wp_lostpassword_url( give_get_checkout_uri() ) . '" title="' . __( 'Lost Password' ) . '">',
+						'<a href="' . wp_lostpassword_url(  "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ) . '" title="' . __( 'Lost Password' ) . '">',
 						'</a>'
 					)
 				);
@@ -711,7 +709,7 @@ function give_get_purchase_form_user( $valid_data = array() ) {
  * Validates the credit card info
  *
  * @access  private
- * @since   1.4.4
+ * @since   1.0
  * @return  array
  */
 function give_purchase_form_validate_cc() {
@@ -733,7 +731,7 @@ function give_purchase_form_validate_cc() {
  * Get Credit Card Info
  *
  * @access  private
- * @since   1.4.4
+ * @since   1.0
  * @return  array
  */
 function give_get_purchase_cc_info() {
@@ -757,7 +755,7 @@ function give_get_purchase_cc_info() {
 /**
  * Validate zip code based on country code
  *
- * @since  1.4.4
+ * @since  1.0
  *
  * @param int    $zip
  * @param string $country_code

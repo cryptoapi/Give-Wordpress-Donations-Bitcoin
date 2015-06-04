@@ -25,17 +25,14 @@ add_filter( 'cmb2_meta_boxes', 'give_single_forms_cmb2_metaboxes' );
  */
 function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 
-
-	$post_id = give_get_admin_post_id();
-
+	$post_id          = give_get_admin_post_id();
 	$price            = give_get_form_price( $post_id );
+	$goal             = give_get_form_goal( $post_id );
 	$variable_pricing = give_has_variable_prices( $post_id );
 	$prices           = give_get_variable_prices( $post_id );
 
-
 	// Start with an underscore to hide fields from custom fields list
 	$prefix = '_give_';
-
 
 	/**
 	 * Repeatable Field Groups
@@ -63,11 +60,14 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					'name'         => __( 'Set Donation', 'give' ),
 					'description'  => __( 'This is the set donation amount for this form.', 'give' ),
 					'id'           => $prefix . 'set_price',
-					'type'         => 'text_money',
-					'before_field' => give_currency_symbol(), // Replaces default '$'
+					'type'         => 'text_small',
+					'row_classes'  => 'give-subfield',
+					'before_field' => give_get_option( 'currency_position' ) == 'before' ? '<span class="give-money-symbol give-money-symbol-before">' . give_currency_symbol() . '</span>' : '',
+					'after_field'  => give_get_option( 'currency_position' ) == 'after' ? '<span class="give-money-symbol give-money-symbol-after">' . give_currency_symbol() . '</span>' : '',
 					'attributes'   => array(
 						'placeholder' => give_format_amount( '0.00' ),
 						'value'       => isset( $price ) ? esc_attr( give_format_amount( $price ) ) : '',
+						'class'       => 'cmb-type-text-small give-money-field',
 					),
 				),
 				//Donation levels: Header
@@ -77,15 +77,16 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 				),
 				//Donation Levels: Repeatable CMB2 Group
 				array(
-					'id'      => $prefix . 'donation_levels',
-					'type'    => 'group',
-					'options' => array(
+					'id'          => $prefix . 'donation_levels',
+					'type'        => 'group',
+					'row_classes' => 'give-subfield',
+					'options'     => array(
 						'add_button'    => __( 'Add Level', 'give' ),
 						'remove_button' => __( '<span class="dashicons dashicons-no"></span>', 'give' ),
 						'sortable'      => true, // beta
 					),
 					// Fields array works the same, except id's only need to be unique for this group. Prefix is not needed.
-					'fields'  => apply_filters( 'give_donation_levels_table_row', array(
+					'fields'      => apply_filters( 'give_donation_levels_table_row', array(
 						array(
 							'name' => __( 'ID', 'give' ),
 							'id'   => $prefix . 'id',
@@ -94,12 +95,14 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 						array(
 							'name'         => __( 'Amount', 'give' ),
 							'id'           => $prefix . 'amount',
-							'type'         => 'text_money',
-							'before_field' => give_currency_symbol(), // Replaces default '$'
+							'type'         => 'text_small',
+							'before_field' => give_get_option( 'currency_position' ) == 'before' ? '<span class="give-money-symbol  give-money-symbol-before">' . give_currency_symbol() . '</span>' : '',
+							'after_field'  => give_get_option( 'currency_position' ) == 'after' ? '<span class="give-money-symbol  give-money-symbol-after">' . give_currency_symbol() . '</span>' : '',
 							'attributes'   => array(
 								'placeholder' => give_format_amount( '0.00' ),
+								'class'       => 'cmb-type-text-small give-money-field',
 							),
-							'before' => 'give_format_admin_multilevel_amount',
+							'before'       => 'give_format_admin_multilevel_amount',
 						),
 						array(
 							'name'       => __( 'Text', 'give' ),
@@ -147,10 +150,42 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					'description' => __( 'This text appears as a label next to the custom amount field for single level forms. For multi-level forms the text will appear as it\'s own level (ie button, radio, or select option). Leave this field blank to prevent it from displaying within your form.', 'give' ),
 					'id'          => $prefix . 'custom_amount_text',
 					'type'        => 'text',
+					'row_classes' => 'give-subfield',
 					'attributes'  => array(
 						'rows'        => 3,
 						'placeholder' => __( 'Give a Custom Amount', 'give' ),
 					),
+				),
+				//Goals
+				array(
+					'name'        => __( 'Set Goal?', 'give' ),
+					'description' => __( 'Do you want to set a donation goal for this form?', 'give' ),
+					'id'          => $prefix . 'goal_option',
+					'type'        => 'radio_inline',
+					'default'     => 'no',
+					'options'     => array(
+						'yes' => __( 'Yes', 'give' ),
+						'no'  => __( 'No', 'give' ),
+					),
+				),
+				array(
+					'name'         => __( 'Set Goal', 'give' ),
+					'description'  => __( 'This is the goal you want to achieve for this form.', 'give' ),
+					'id'           => $prefix . 'set_goal',
+					'type'         => 'text_money',
+					'row_classes'  => 'give-subfield',
+					'before_field' => give_currency_symbol(), // Replaces default '$'
+					'attributes'   => array(
+						'placeholder' => give_format_amount( '0.00' ),
+						'value'       => isset( $goal ) ? esc_attr( give_format_amount( $goal ) ) : '',
+					),
+				),
+				array(
+					'name'        => __( 'Goal Progress Bar Color', 'give' ),
+					'id'          => $prefix . 'goal_color',
+					'type'        => 'colorpicker',
+					'row_classes' => 'give-subfield',
+					'default'     => '#2bc253',
 				),
 			)
 		)
@@ -185,6 +220,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					'name'        => __( 'Content', 'give' ),
 					'description' => __( 'This content will display on the single give form page.', 'give' ),
 					'id'          => $prefix . 'form_content',
+					'row_classes' => 'give-subfield',
 					'type'        => 'wysiwyg'
 				),
 			)
@@ -216,11 +252,12 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 						'default' => 'onpage',
 					),
 					array(
-						'id'         => $prefix . 'reveal_label',
-						'name'       => __( 'Reveal / Modal Open Text', 'give' ),
-						'desc'       => __( 'The button label for completing the donation.', 'give' ),
-						'type'       => 'text_small',
-						'attributes' => array(
+						'id'          => $prefix . 'reveal_label',
+						'name'        => __( 'Reveal / Modal Open Text', 'give' ),
+						'desc'        => __( 'The button label for completing the donation.', 'give' ),
+						'type'        => 'text_small',
+						'row_classes' => 'give-subfield',
+						'attributes'  => array(
 							'placeholder' => __( 'Donate Now', 'give' ),
 						),
 					),
@@ -287,20 +324,22 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					'default'     => 'none',
 				),
 				array(
-					'id'         => $prefix . 'agree_label',
-					'name'       => __( 'Agree to Terms Label', 'give' ),
-					'desc'       => __( 'Label shown next to the agree to terms check box.', 'give' ),
-					'type'       => 'text',
-					'size'       => 'regular',
-					'attributes' => array(
+					'id'          => $prefix . 'agree_label',
+					'name'        => __( 'Agree to Terms Label', 'give' ),
+					'desc'        => __( 'Label shown next to the agree to terms check box.', 'give' ),
+					'type'        => 'text',
+					'row_classes' => 'give-subfield',
+					'size'        => 'regular',
+					'attributes'  => array(
 						'placeholder' => __( 'Agree to Terms?', 'give' ),
 					),
 				),
 				array(
-					'id'   => $prefix . 'agree_text',
-					'name' => __( 'Agreement Text', 'give' ),
-					'desc' => __( 'This is the actual text which the user will have to agree to.', 'give' ),
-					'type' => 'wysiwyg'
+					'id'          => $prefix . 'agree_text',
+					'row_classes' => 'give-subfield',
+					'name'        => __( 'Agreement Text', 'give' ),
+					'desc'        => __( 'This is the actual text which the user will have to agree to.', 'give' ),
+					'type'        => 'wysiwyg'
 				),
 			)
 		)

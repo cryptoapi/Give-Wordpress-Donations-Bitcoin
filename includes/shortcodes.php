@@ -167,7 +167,7 @@ function give_receipt_shortcode( $atts, $content = null ) {
 		'payment_id'     => true
 	), $atts, 'give_receipt' );
 
-	//If registration open? If so, add better error messaging to tell user their session expired
+	//Is registration open? If so, add better error messaging to tell user their session expired
 	if ( get_option( 'users_can_register' ) ) {
 
 		$email            = get_post_meta( $payment->ID, '_give_payment_user_email', true );
@@ -248,11 +248,10 @@ add_shortcode( 'give_profile_editor', 'give_profile_editor_shortcode' );
  * Processes the profile updater form by updating the necessary fields
  *
  * @since  1.0
- * @author Sunny Ratilal
  *
  * @param array $data Data sent from the profile editor
  *
- * @return void
+ * @return false
  */
 function give_process_profile_editor_updates( $data ) {
 	// Profile field change request

@@ -24,9 +24,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @return string $purchase_form
  */
-
-add_action( 'give_single_form_summary', 'give_get_donation_form', 10 );
-
 function give_get_donation_form( $args = array() ) {
 
 	global $give_options, $post, $give_displayed_form_ids;
@@ -171,9 +168,9 @@ function give_show_purchase_form( $form_id ) {
 
 	if ( give_can_checkout() && isset( $form_id ) ) {
 
-		$show_register_form = apply_filters( 'give_show_register_form', get_post_meta( $form_id, '_give_show_register_form', true ) );
-
 		do_action( 'give_purchase_form_before_register_login', $form_id );
+
+		$show_register_form = apply_filters( 'give_show_register_form', get_post_meta( $form_id, '_give_show_register_form', true ) );
 
 		if ( ( $show_register_form === 'registration' || ( $show_register_form === 'both' && ! isset( $_GET['login'] ) ) ) && ! is_user_logged_in() ) : ?>
 			<div id="give_checkout_login_register">
@@ -233,9 +230,8 @@ function give_output_donation_levels( $form_id = 0, $args = array() ) {
 	$currency_position   = isset( $give_options['currency_position'] ) ? $give_options['currency_position'] : 'before';
 	$symbol              = isset( $give_options['currency'] ) ? give_currency_symbol( $give_options['currency'] ) : '$';
 	$currency_output     = '<span class="give-currency-symbol give-currency-position-' . $currency_position . '">' . $symbol . '</span>';
-	$default_amount      = give_get_default_form_amount( $form_id );
+	$default_amount      = give_format_amount( give_get_default_form_amount( $form_id ) );
 	$custom_amount_text  = get_post_meta( $form_id, '_give_custom_amount_text', true );
-
 
 	do_action( 'give_before_donation_levels', $form_id );
 
@@ -246,11 +242,9 @@ function give_output_donation_levels( $form_id = 0, $args = array() ) {
 		<input id="give-amount" class="give-amount-hidden" type="hidden" name="give-amount" value="<?php echo $default_amount; ?>" required>
 		<p class="set-price give-donation-amount form-row-wide">
 			<?php
-
 			if ( $currency_position == 'before' ) {
 				echo $currency_output;
 			}
-
 			?>
 			<span id="give-amount" class="give-text-input"><?php echo give_format_amount( $default_amount ); ?></span>
 		</p>
@@ -276,7 +270,6 @@ function give_output_donation_levels( $form_id = 0, $args = array() ) {
 				<p class="give-loading-text give-updating-price-loader" style="display: none;">
 					<span class="give-loading-animation"></span> <?php _e( 'Updating Price', 'Give' ); ?>
 					<span class="elipsis">.</span><span class="elipsis">.</span><span class="elipsis">.</span></p>
-
 			</div>
 		</div>
 	<?php }
@@ -740,7 +733,7 @@ function give_get_register_fields( $form_id ) {
 		$user_data = get_userdata( $user_ID );
 	}
 
-	$show_register_form = get_post_meta( $form_id, '_give_show_register_form', true );
+	$show_register_form = apply_filters( 'give_show_register_form', get_post_meta( $form_id, '_give_show_register_form', true ) );
 
 	ob_start(); ?>
 	<fieldset id="give_register_fields">
@@ -1137,8 +1130,14 @@ add_action( 'give_pre_form_output', 'give_form_content', 10, 2 );
  */
 function give_form_display_content( $form_id ) {
 
-	$content = apply_filters( 'the_content', get_post_meta( $form_id, '_give_form_content', true ) );
-	$output  = '<div id="give-form-content-' . $form_id . '" class="give-form-content-wrap" >' . $content . '</div>';
+	$content = wpautop( get_post_meta( $form_id, '_give_form_content', true ) );
+
+	if ( give_get_option( 'disable_the_content_filter' ) !== 'on' ) {
+		$content = apply_filters( 'the_content', $content );
+	}
+
+	$output = '<div id="give-form-content-' . $form_id . '" class="give-form-content-wrap" >' . $content . '</div>';
+
 	echo apply_filters( 'give_form_content_output', $output );
 
 }

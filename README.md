@@ -8,7 +8,7 @@ Announcing: Give. The most flexible, robust, and easy to use WordPress plugin fo
 
 ### Why Give? ###
 
-Prior to Give there's was no single go-to solution for accepting donations on WordPress. Sure, Gravity Forms and WooCommerce are great plugins but they're not developed to work specifically for donations. This can often lead to your users being confused by unnecessary cart systems, incorrect terminology, or lack of flexibility. As an admin, you may have wrestled with the various other WordPress donation plugins. Dealing with the lack of documentation and unreliable support can be an all too common occurrence and a real pain. 
+Prior to Give there was no single go-to solution for accepting donations on WordPress. Sure, Gravity Forms and WooCommerce are great plugins but they're not developed to work specifically for donations. This can often lead to your users being confused by unnecessary cart systems, incorrect terminology, or lack of flexibility. As an admin, you may have wrestled with the various other WordPress donation plugins. Dealing with the lack of documentation and unreliable support can be an all too common occurrence and a real pain. 
 
 There's a better way. Now you have Give.
 
@@ -39,11 +39,11 @@ Stay in touch with us for important plugin news and updates:
 
 ### Contribute to Give ###
 
-This is a WordPress plugin and therefore is GPL / open source. We are always looking for more contributors. Whether you know another language, can code like no ones business, or just have an idea, we would love your help and input. To contribute to Give please head over to our website or view/fork/watch this GitHub repository to learn more about what issues we're tackling and how the project is progressing.
+This is a WordPress plugin and therefore is GPL / open source. We are always looking for more contributors. Whether you know another language, can code like no one's business, or just have an idea, we would love your help and input. To contribute to Give, please review our [contributing guidelines](CONTRIBUTING.md). Feel free to view/fork/watch this GitHub repository to learn more about what issues we're tackling and how the project is progressing.
 
 ## Installation ##
 
-The easiest way to install the plugin is through the [WordPress.org plugin repository](http://wordpress.org/plugins/give "Give on the WordPress.org plugin repository"). 
+The easiest way to install the plugin is through the [WordPress.org plugin repository](http://wordpress.org/plugins/give "Give on the WordPress.org plugin repository").
 
 ### Minimum Requirements ###
 

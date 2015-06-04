@@ -156,6 +156,7 @@ function give_insert_payment( $payment_data = array() ) {
 			'currency'   => $payment_data['currency'],
 			'form_title' => $payment_data['give_form_title'],
 			'form_id'    => $payment_data['give_form_id'],
+			'price_id'   => give_get_price_id( $payment_data['give_form_id'], $payment_data['price'] ),
 			'user_info'  => $payment_data['user_info'],
 		);
 
@@ -256,7 +257,7 @@ function give_update_payment_status( $payment_id, $new_status = 'publish' ) {
 }
 
 /**
- * Deletes a Purchase
+ * Deletes a Donation
  *
  * @since 1.0
  * @global    $give_logs
@@ -275,15 +276,9 @@ function give_delete_purchase( $payment_id = 0 ) {
 		return;
 	}
 
-	$donations = give_get_payment_meta_donations( $payment_id );
+	$form_id = give_get_payment_form_id( $payment_id );
 
-	if ( is_array( $donations ) ) {
-		// Update sale counts and earnings for all purchased forms
-		foreach ( $donations as $donation ) {
-			give_undo_purchase( $donation['id'], $payment_id );
-		}
-	}
-
+	give_undo_purchase( $form_id, $payment_id );
 
 	$amount      = give_get_payment_amount( $payment_id );
 	$status      = $post->post_status;
@@ -633,7 +628,6 @@ function give_get_earnings_by_date( $day = null, $month_num, $year = null, $hour
  * Get Sales By Date
  *
  * @since  1.0
- * @author Sunny Ratilal
  *
  * @param int $day       Day number
  * @param int $month_num Month number
@@ -832,16 +826,15 @@ function give_get_payment_meta( $payment_id = 0, $meta_key = '_give_payment_meta
 
 	if ( $meta_key === '_give_payment_meta' ) {
 
-		//These are here for backwards compatibility
-		if ( ! isset( $meta['key'] ) ) {
+		if ( empty( $meta['key'] ) ) {
 			$meta['key'] = give_get_payment_key( $payment_id );
 		}
 
-		if ( ! isset( $meta['email'] ) ) {
+		if ( empty( $meta['email'] ) ) {
 			$meta['email'] = give_get_payment_user_email( $payment_id );
 		}
 
-		if ( ! isset( $meta['date'] ) ) {
+		if ( empty( $meta['date'] ) ) {
 			$meta['date'] = get_post_field( 'post_date', $payment_id );
 		}
 	}
@@ -912,17 +905,19 @@ function give_get_payment_meta_user_info( $payment_id ) {
 /**
  * Get the donations Key from Payment Meta
  *
- * @since 1.0
+ * @description Retrieves the form_id from a (Previously title give_get_payment_meta_donations)
+ * @since       1.0
  *
  * @param int $payment_id Payment ID
  *
  * @return array $donations Downloads Meta Values
  */
-function give_get_payment_meta_donations( $payment_id ) {
+function give_get_payment_form_id( $payment_id ) {
 	$payment_meta = give_get_payment_meta( $payment_id );
-	$donations    = isset( $payment_meta['donations'] ) ? maybe_unserialize( $payment_meta['donations'] ) : array();
 
-	return apply_filters( 'give_payment_meta_donations', $donations );
+	$form_id = isset( $payment_meta['form_id'] ) ? $payment_meta['donations'] : 0;
+
+	return apply_filters( 'give_get_payment_form_id', $form_id );
 }
 
 /**
@@ -1161,11 +1156,11 @@ function give_get_next_payment_number() {
 }
 
 /**
- * Get the fully formatted payment amount. The payment amount is retrieved using
- * give_get_payment_amount() and is then sent through give_currency_filter() and
- * give_format_amount() to format the amount correctly.
+ * Get Payment Amount
  *
- * @since 1.0
+ * @description Get the fully formatted payment amount. The payment amount is retrieved using give_get_payment_amount() and is then sent through give_currency_filter() and  give_format_amount() to format the amount correctly.
+ *
+ * @since       1.0
  *
  * @param int $payment_id Payment ID
  *
@@ -1184,6 +1179,8 @@ function give_payment_amount( $payment_id = 0 ) {
  * @since  1.0
  *
  * @param int $payment_id Payment ID
+ *
+ * @return mixed|void
  */
 function give_get_payment_amount( $payment_id ) {
 
@@ -1201,45 +1198,6 @@ function give_get_payment_amount( $payment_id ) {
 	return apply_filters( 'give_payment_amount', floatval( $amount ), $payment_id );
 }
 
-/**
- * Retrieves arbitrary fees for the payment
- *
- * @since 1.0
- *
- * @param int    $payment_id Payment ID
- * @param string $type       Fee type
- *
- * @return mixed array if payment fees found, false otherwise
- */
-function give_get_payment_fees( $payment_id = 0, $type = 'all' ) {
-
-	$payment_meta = give_get_payment_meta( $payment_id );
-
-	$fees         = array();
-	$payment_fees = isset( $payment_meta['fees'] ) ? $payment_meta['fees'] : false;
-
-	if ( ! empty( $payment_fees ) && is_array( $payment_fees ) ) {
-
-		foreach ( $payment_fees as $fee_id => $fee ) {
-
-			if ( 'all' != $type && ! empty( $fee['type'] ) && $type != $fee['type'] ) {
-
-				unset( $payment_fees[ $fee_id ] );
-
-			} else {
-
-				$fees[] = array(
-					'id'     => $fee_id,
-					'amount' => $fee['amount'],
-					'label'  => $fee['label']
-				);
-
-			}
-		}
-	}
-
-	return apply_filters( 'give_get_payment_fees', $fees, $payment_id );
-}
 
 /**
  * Retrieves the transaction ID for the given payment
@@ -1271,7 +1229,9 @@ function give_get_payment_transaction_id( $payment_id = 0 ) {
  * @since  1.0
  *
  * @param int    $payment_id     Payment ID
- * @param string $transaction_id The transaciton ID from the gateway
+ * @param string $transaction_id The transaction ID from the gateway
+ *
+ * @return bool|mixed
  */
 function give_set_payment_transaction_id( $payment_id = 0, $transaction_id = '' ) {
 
@@ -1595,4 +1555,73 @@ function give_filter_where_older_than_week( $where = '' ) {
 	$where .= " AND post_date <= '{$start}'";
 
 	return $where;
+}
+
+
+/**
+ * Get Price ID
+ *
+ * @description Retrieves the Price ID given a proper form ID and price (donation) total
+ *
+ * @param $form_id
+ * @param $price
+ *
+ * @return string $price_id
+ */
+function give_get_price_id( $form_id, $price ) {
+
+	$price_id = 0;
+
+	if ( give_has_variable_prices( $form_id ) ) {
+
+		$levels = maybe_unserialize( get_post_meta( $form_id, '_give_donation_levels', true ) );
+
+		foreach ( $levels as $level ) {
+
+			$level_amount = (float) give_sanitize_amount( $level['_give_amount'] );
+
+			//check that this indeed the recurring price
+			if ( $level_amount == $price ) {
+
+				$price_id = $level['_give_id']['level_id'];
+
+			}
+
+		}
+
+	}
+
+	return $price_id;
+
+}
+
+/**
+ * Retrieves arbitrary fees for the donation (Currently not in use!!)
+ * @TODO  - Incorporate a fee-based functionality similar to below
+ * @since 1.0
+ *
+ * @param int    $payment_id Payment ID
+ * @param string $type       Fee type
+ *
+ * @return mixed array if payment fees found, false otherwise
+ */
+function give_get_payment_fees( $payment_id = 0, $type = 'all' ) {
+	$payment_meta = give_get_payment_meta( $payment_id );
+	$fees         = array();
+	$payment_fees = isset( $payment_meta['fees'] ) ? $payment_meta['fees'] : false;
+	if ( ! empty( $payment_fees ) && is_array( $payment_fees ) ) {
+		foreach ( $payment_fees as $fee_id => $fee ) {
+			if ( 'all' != $type && ! empty( $fee['type'] ) && $type != $fee['type'] ) {
+				unset( $payment_fees[ $fee_id ] );
+			} else {
+				$fees[] = array(
+					'id'     => $fee_id,
+					'amount' => $fee['amount'],
+					'label'  => $fee['label']
+				);
+			}
+		}
+	}
+
+	return apply_filters( 'give_get_payment_fees', $fees, $payment_id );
 }
