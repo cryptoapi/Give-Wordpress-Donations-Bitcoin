@@ -142,6 +142,8 @@ We also really like WooCommerce. It's hands-down the most robust eCommerce platf
 * Fix: Translation files need "give-" prepended to them to work properly @see: https://github.com/WordImpress/Give/issues/161
 * Fix: Fix PHP notice for Undefined index: _give_price. closes #159 @see: https://github.com/WordImpress/Give/issues/159 - Thanks @helgatheviking!
 * Fix: Shortcode now outputs Goals properly @see: https://wordpress.org/support/topic/goal-tracking
+* Improvement: All scripts are minified and concatenated into one script.
+* Improvement: All CSS styles are minified and concatenated into one stylesheet.
 * Improvement: Script loading now properly registers scripts and styles globally using wp_register_style & wp_register_script
 * Improvement: Removed numerous uses of the $give_options global - still more cleanup needed
 * Improvement: Modal window CSS fixes for login fields: https://github.com/WordImpress/Give/issues/60
