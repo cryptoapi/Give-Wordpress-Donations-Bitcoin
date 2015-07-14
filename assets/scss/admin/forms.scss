@@ -1,0 +1,426 @@
+/**
+ * Give Forms SCSS
+ *
+ * @package     Give
+ * @subpackage  SCSS/Admin
+ * @copyright   Copyright (c) 2015, WordImpress
+ * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+*/
+
+/*------------------------------------
+Forms CPT
+--------------------------------------*/
+
+/* Hide conditional fields */
+.cmb2-id--give-set-price, .cmb2-id--give-levels-header, .cmb2-id--give-levels-header + .cmb-repeat-group-wrap, .cmb2-id--give-display-style, .post-type-give_forms .tablenav #post-query-submit, .give-hidden, .cmb2-id--give-form-content, .cmb2-id--give-reveal-label, .give-single-period, .give-single-times, .cmb2-id--give-custom-amount-text, .cmb2-id--give-offline-checkout-notes {
+  display: none;
+}
+
+/* Donation Levels Repeating Field */
+#_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-row .cmb2-radio-list label {
+  font-size: 12px;
+}
+
+#_give_donation_levels_repeat .cmb-group-title, #_give_donation_levels_repeat .cmb-row > .cmb-remove-group-row, #_give_donation_levels_repeat .cmb-row > .handlediv {
+  display: none;
+}
+
+/* Table Rows */
+div.cmb-type-levels-repeater-header + div.cmb-repeat-group-wrap {
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 100%;
+  max-width: 0;
+
+}
+
+//Mulilevel Repeater Header
+.cmb2-id--give-levels-header {
+  padding: 10px 12px 0 !important;
+  margin: 0 !important;
+  background: #F7F7F7;
+  border-bottom: none !important;
+
+  .table-container {
+	display: table;
+	width: 100%;
+
+	border-top: 1px solid #e9e9e9;
+	border-bottom: 1px solid #e9e9e9;
+	border-left: 1px solid #e9e9e9;
+
+	> .table-row {
+	  display: table-row;
+	  background: #FCFCFC;
+
+	  > .table-cell {
+		display: table-cell;
+		vertical-align: middle;
+		padding: 10px 15px;
+		border-right: 1px solid #e9e9e9;
+	  }
+
+	}
+
+  }
+}
+
+#_give_donation_levels_repeat {
+  background: #F7F7F7;
+  padding: 0 12px 20px;
+  box-sizing: border-box;
+
+  .cmb-row, .inside {
+	margin: 0;
+  }
+  .cmb-remove-field-row {
+	margin: 3px 0 0;
+
+	.button {
+	  height: 25px;
+	  padding: 0 3px;
+	}
+	span.dashicons-no {
+	  line-height: 1.15em;
+	}
+
+  }
+
+  .cmbhandle {
+	display: none;
+  }
+  .cmb-add-row {
+	margin: 12px 0 0;
+  }
+
+}
+
+//---------------------------------------------------
+//Field One Offs
+//---------------------------------------------------
+.give-time-field {
+  width: 65px;
+}
+
+.give-money-field {
+  width: 75px;
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.give-money-symbol {
+  border: 1px solid #e9e9e9;
+  background: #FCFCFC;
+  margin: 0;
+  font-size: 14px;
+  padding: 5px 8px;
+}
+
+.give-money-symbol-before {
+  border-right: 0;
+}
+
+.give-money-symbol-after {
+  border-left: 0;
+}
+
+p.give-level-id {
+  border-radius: 50%;
+  border: 1px solid #e9e9e9;
+  background: #FCFCFC;
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+#poststuff .give-subfield {
+  background: #FAFAFA;
+
+  .cmb-th label {
+	padding-left: 16px;
+  }
+  .cmb-td {
+	padding-right: 10px;
+	box-sizing: border-box;
+  }
+
+}
+
+.postbox-container .cmb-row {
+  margin: 0;
+
+  .cmb-th label {
+	padding-left: 8px;
+  }
+
+}
+
+/* Smaller Resolution Desktops AND UP */
+@media only screen and (min-width: 851px) {
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-row > .cmb-th {
+	display: none;
+  }
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-row > .cmb-td {
+	float: left;
+	width: 100%;
+  }
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-row {
+	float: left;
+	border-bottom: none;
+  }
+
+  .cmb-type-give-default-radio-inline .cmb-td {
+	margin-top: 5px;
+  }
+
+}
+
+/* Smaller Resolution Desktops */
+@media only screen and (min-width: 851px) and (max-width: 1285px) {
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list {
+
+	> .cmb-remove-field-row {
+	  width: 100%;
+	  padding-top: 0;
+	}
+	> .cmb-type-text-money {
+	  width: 105px;
+	}
+	input.cmb2-text-money {
+	  width: 65px;
+	}
+
+	> .cmb-type-text {
+	  width: 180px;
+	  padding-right: 20px;
+	}
+	> .cmb-type-radio-inline {
+	  margin-left: 20px;
+	}
+
+  }
+
+  .col-id {
+	width: 15px;
+  }
+  p.give-level-id {
+	margin: 7px 15px 0 0;
+  }
+
+  .col-amount {
+	width: 70px;
+  }
+
+  .col-text {
+	width: 165px;
+  }
+  .col-sort {
+	display: none !important;
+  }
+}
+
+@media only screen and (min-width: 1000px) {
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list {
+
+	> .cmb-type-text {
+	  width: 220px;
+	  padding-right: 20px;
+	}
+  }
+
+  .col-text {
+	width: 205px;
+  }
+
+}
+
+@media only screen and (min-width: 1201px) {
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-remove-field-row {
+	float: right;
+  }
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-row {
+	padding-right: 20px;
+  }
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-remove-field-row.cmb-row {
+	padding-right: 0;
+  }
+
+  #_give_donation_levels_repeat .regular-text {
+	width: 100%;
+  }
+
+  .col-id {
+	width: 20px;
+  }
+  p.give-level-id {
+	margin: 6px 0 0;
+  }
+  .col-amount {
+	width: 85px;
+  }
+
+  .col-text {
+	width: 195px;
+  }
+
+  .col-sort {
+	width: 100px;
+  }
+
+}
+
+@media only screen and (min-width: 1375px) {
+
+  .col-text {
+	width: 270px;
+  }
+
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-type-text {
+	width: 290px;
+  }
+
+}
+
+/* Small Resolution Repeater */
+@media only screen and (max-width: 850px) {
+  div.cmb-type-levels-repeater-header {
+	display: none !important;
+  }
+
+  p.give-level-id {
+	float: left;
+	font-weight: bold;
+	margin-top: 5px;
+  }
+
+}
+
+/*-------------------------------------
+Recurring Fields in Repeater
+-------------------------------------*/
+
+@media(min-width: 851px) and (max-width: 1300px) {
+
+  // Hide Table columns
+  .cmb2-id--give-levels-header .table-container > .table-row > .table-cell {
+
+	&.col-recurring, &.col-period, &.col-times {
+	  display: none;
+	}
+
+  }
+
+  // display labels for new recurring fields
+  #_give_donation_levels_repeat > .cmb-repeatable-grouping .cmb-field-list > .cmb-row {
+
+	&.cmb2-id--give-donation-levels-0--give-recurring {
+	  clear: left;
+	}
+	&.cmb2-id--give-donation-levels-0--give-recurring, &.cmb2-id--give-donation-levels-0--give-period, &.cmb2-id--give-donation-levels-0--give-times {
+	  padding-top: 0;
+	  > .cmb-th {
+		width: 100%;
+		display: block;
+	  }
+
+	}
+
+  }
+
+}
+
+/*-------------------------------------
+Publish Metabox
+-------------------------------------*/
+
+/*Shortcode Input */
+
+.shortcode-wrap {
+  margin: 1px 14px 12px 11px;
+
+  label {
+	margin: 0 0 3px;
+	display: block;
+	cursor: default;
+  }
+
+  .shortcode-input {
+	margin: 0;
+	width: 100%;
+  }
+}
+
+/*-------------------------------------
+Content Options
+-------------------------------------*/
+
+.cmb2-id--give-content-option,
+.cmb2-id--give-terms-option,
+.cmb2-id--give-offline-donation-enable-billing-fields-single,
+.cmb2-id--give-goal-option,
+.cmb2-id--give-customize-offline-donations {
+  border-bottom: none !important;
+  margin: 0 !important;
+}
+
+.cmb2-id--give-form-content,
+.cmb2-id--give-agree-label,
+.cmb2-id--give-offline-checkout-notes,
+.cmb2-id--give-set-goal,
+.cmb2-id--give-offline-donation-enable-billing-fields-single {
+  border-top: 1px solid #e9e9e9 !important;
+}
+
+/*-------------------------------------
+Terms and Conditions Metabox
+---------------------------------------*/
+
+.cmb2-id--give-agree-label,
+.cmb2-id--give-agree-text {
+  display: none;
+}
+
+/*-------------------------------------
+Dashboard Columns
+-------------------------------------*/
+
+input.shortcode-input {
+  width: 100%;
+}
+
+/*-------------------------------------
+ASIDE
+-------------------------------------*/
+
+#side-sortables {
+
+  .cmb-th label {
+
+	&:after {
+	  display: none;
+	}
+
+  }
+  .cmb2-id--give-show-register-form {
+	padding: 10px 0 0 !important;
+  }
+
+  .cmb2-wrap > .cmb-field-list > .cmb-row {
+	padding-top: 10px;
+  }
+
+  .cmb-row .cmb2-metabox-description {
+	padding-bottom: 0;
+  }
+
+}
+
+.cmb2-metabox-description {
+  font-size: 13px;
+  line-height: 1.5;
+}
