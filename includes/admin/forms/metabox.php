@@ -147,7 +147,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 				),
 				array(
 					'name'        => __( 'Custom Amount Text', 'give' ),
-					'description' => __( 'This text appears as a label next to the custom amount field for single level forms. For multi-level forms the text will appear as it\'s own level (ie button, radio, or select option). Leave this field blank to prevent it from displaying within your form.', 'give' ),
+					'description' => __( 'This text appears as a label next to the custom amount field for single level forms. For multi-level forms the text will appear as it\'s own level (ie button, radio, or select option). Add your own message or leave this field blank to prevent it from displaying within your form.', 'give' ),
 					'id'          => $prefix . 'custom_amount_text',
 					'type'        => 'text',
 					'row_classes' => 'give-subfield',
@@ -326,7 +326,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 				array(
 					'id'          => $prefix . 'agree_label',
 					'name'        => __( 'Agree to Terms Label', 'give' ),
-					'desc'        => __( 'Label shown next to the agree to terms check box.', 'give' ),
+					'desc'        => __( 'The label shown next to the agree to terms check box. Add your own to customize or leave blank to use the default text placeholder.', 'give' ),
 					'type'        => 'text',
 					'row_classes' => 'give-subfield',
 					'size'        => 'regular',
@@ -338,7 +338,7 @@ function give_single_forms_cmb2_metaboxes( array $meta_boxes ) {
 					'id'          => $prefix . 'agree_text',
 					'row_classes' => 'give-subfield',
 					'name'        => __( 'Agreement Text', 'give' ),
-					'desc'        => __( 'This is the actual text which the user will have to agree to.', 'give' ),
+					'desc'        => __( 'This is the actual text which the user will have to agree to in order to make a donation.', 'give' ),
 					'type'        => 'wysiwyg'
 				),
 			)
@@ -368,7 +368,7 @@ function give_cmb_render_levels_repeater_header() {
 		</div>
 	</div>
 
-<?php
+	<?php
 }
 
 

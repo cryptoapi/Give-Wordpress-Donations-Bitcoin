@@ -24,12 +24,40 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function give_test_ajax_works() {
 
+	// Check if the Airplane Mode plugin is installed
+	if ( class_exists( 'Airplane_Mode_Core' ) ) {
+
+		$airplane = Airplane_Mode_Core::getInstance();
+
+		if ( method_exists( $airplane, 'enabled' ) ) {
+
+			if ( $airplane->enabled() ) {
+				return true;
+			}
+
+		} else {
+
+			if ( $airplane->check_status() == 'on' ) {
+				return true;
+			}
+		}
+	}
+
+	add_filter( 'block_local_requests', '__return_false' );
+
+	if ( get_transient( '_give_ajax_works' ) ) {
+		return true;
+	}
+
 	$params = array(
-		'sslverify' => false,
-		'timeout'   => 60,
+		'sslverify'  => false,
+		'timeout'    => 30,
+		'body'       => array(
+			'action' => 'give_test_ajax'
+		)
 	);
 
-	$ajax  = wp_remote_get( add_query_arg( 'action', 'give_test_ajax', give_get_ajax_url() ), $params );
+	$ajax  = wp_remote_post( give_get_ajax_url(), $params );
 	$works = true;
 
 	if ( is_wp_error( $ajax ) ) {
@@ -38,31 +66,36 @@ function give_test_ajax_works() {
 
 	} else {
 
-		if ( empty( $ajax['response'] ) ) {
+		if( empty( $ajax['response'] ) ) {
 			$works = false;
 		}
 
-		if ( empty( $ajax['response']['code'] ) || 200 !== (int) $ajax['response']['code'] ) {
+		if( empty( $ajax['response']['code'] ) || 200 !== (int) $ajax['response']['code'] ) {
 			$works = false;
 		}
 
-		if ( empty( $ajax['response']['message'] ) || 'OK' !== $ajax['response']['message'] ) {
+		if( empty( $ajax['response']['message'] ) || 'OK' !== $ajax['response']['message'] ) {
 			$works = false;
 		}
 
-		if ( ! isset( $ajax['body'] ) || 0 !== (int) $ajax['body'] ) {
+		if( ! isset( $ajax['body'] ) || 0 !== (int) $ajax['body'] ) {
 			$works = false;
 		}
 
 	}
 
+	if ( $works ) {
+		set_transient( '_give_ajax_works', '1', DAY_IN_SECONDS );
+	}
+
 	return $works;
 }
+
 
 /**
  * Get AJAX URL
  *
- * @since 1.3
+ * @since 1.0
  * @return string
  */
 function give_get_ajax_url() {
@@ -209,35 +242,35 @@ add_action( 'wp_ajax_give_form_search', 'give_ajax_form_search' );
 add_action( 'wp_ajax_nopriv_give_form_search', 'give_ajax_form_search' );
 
 /**
- * Search the customers database via Ajax
+ * Search the donors database via Ajax
  *
  * @since 1.0
  * @return void
  */
-function give_ajax_customer_search() {
+function give_ajax_donor_search() {
 	global $wpdb;
 
 	$search  = esc_sql( sanitize_text_field( $_GET['s'] ) );
 	$results = array();
 	if ( ! current_user_can( 'view_give_reports' ) ) {
-		$customers = array();
+		$donors = array();
 	} else {
-		$customers = $wpdb->get_results( "SELECT id,name,email FROM {$wpdb->prefix}give_customers WHERE `name` LIKE '%$search%' OR `email` LIKE '%$search%' LIMIT 50" );
+		$donors = $wpdb->get_results( "SELECT id,name,email FROM {$wpdb->prefix}give_donors WHERE `name` LIKE '%$search%' OR `email` LIKE '%$search%' LIMIT 50" );
 	}
 
-	if ( $customers ) {
+	if ( $donors ) {
 
-		foreach ( $customers as $customer ) {
+		foreach ( $donors as $donor ) {
 
 			$results[] = array(
-				'id'   => $customer->id,
-				'name' => $customer->name . '(' . $customer->email . ')'
+				'id'   => $donor->id,
+				'name' => $donor->name . '(' . $donor->email . ')'
 			);
 		}
 
 	} else {
 
-		$customers[] = array(
+		$donors[] = array(
 			'id'   => 0,
 			'name' => __( 'No results found', 'give' )
 		);
@@ -249,13 +282,13 @@ function give_ajax_customer_search() {
 	give_die();
 }
 
-add_action( 'wp_ajax_give_customer_search', 'give_ajax_customer_search' );
+add_action( 'wp_ajax_give_donor_search', 'give_ajax_donor_search' );
 
 
 /**
  * Searches for users via ajax and returns a list of results
  *
- * @since 2.0
+ * @since 1.0
  * @return void
  */
 function give_ajax_search_users() {

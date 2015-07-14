@@ -65,20 +65,32 @@ function give_load_scripts() {
 	if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
 
 		if ( give_is_cc_verify_enabled() ) {
-			wp_enqueue_script( 'give-cc-validator', $js_plugins . 'jquery.creditCardValidator' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+			wp_register_script( 'give-cc-validator', $js_plugins . 'jquery.creditCardValidator' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+			wp_enqueue_script( 'give-cc-validator' );
 		}
 
-		wp_enqueue_script( 'give-blockui', $js_plugins . 'jquery.blockUI' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
-		wp_enqueue_script( 'give-qtip', $js_plugins . 'jquery.qtip' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
-		wp_enqueue_script( 'give-mask-money', $js_plugins . 'jquery.maskMoney' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
-		wp_enqueue_script( 'give-magnific', $js_plugins . 'give-magnific' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
-		wp_enqueue_script( 'give-checkout-global', $js_dir . 'give-checkout-global' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_register_script( 'give-blockui', $js_plugins . 'jquery.blockUI' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-blockui' );
+
+		wp_register_script( 'give-qtip', $js_plugins . 'jquery.qtip' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-qtip' );
+
+		wp_register_script( 'give-mask-money', $js_plugins . 'jquery.maskMoney' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-mask-money' );
+
+		wp_register_script( 'give-magnific', $js_plugins . 'give-magnific' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-magnific' );
+
+		wp_register_script( 'give-checkout-global', $js_dir . 'give-checkout-global' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-checkout-global' );
 
 		//General scripts
-		wp_enqueue_script( 'give-scripts', $js_dir . 'give' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_register_script( 'give-scripts', $js_dir . 'give' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-scripts' );
 
 		// Load AJAX scripts, if enabled
-		wp_enqueue_script( 'give-ajax', $js_dir . 'give-ajax' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_register_script( 'give-ajax', $js_dir . 'give-ajax' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give-ajax' );
 
 		//Localize / Pass AJAX vars from PHP
 		wp_localize_script( 'give-checkout-global', 'give_global_vars', $localize_give_checkout );
@@ -88,7 +100,8 @@ function give_load_scripts() {
 	} else {
 
 		//DEBUG is OFF (one JS file to rule them all!)
-		wp_enqueue_script( 'give', $js_dir . 'give.all.min.js', array( 'jquery' ), GIVE_VERSION );
+		wp_register_script( 'give', $js_dir . 'give.all.min.js', array( 'jquery' ), GIVE_VERSION );
+		wp_enqueue_script( 'give' );
 
 		//Localize / Pass AJAX vars from PHP
 		wp_localize_script( 'give', 'give_global_vars', $localize_give_checkout );
@@ -107,14 +120,11 @@ add_action( 'wp_enqueue_scripts', 'give_load_scripts' );
  * Checks the styles option and hooks the required filter.
  *
  * @since 1.0
- * @global $give_options
  * @return void
  */
 function give_register_styles() {
 
-	global $give_options;
-
-	if ( isset( $give_options['disable_css'] ) ) {
+	if ( give_get_option( 'disable_styles', false ) ) {
 		return;
 	}
 
@@ -149,7 +159,8 @@ function give_register_styles() {
 		$url = trailingslashit( give_get_templates_url() ) . $file;
 	}
 
-	wp_enqueue_style( 'give-styles', $url, array(), GIVE_VERSION );
+	wp_register_style( 'give-styles', $url, array(), GIVE_VERSION, 'all' );
+	wp_enqueue_style( 'give-styles' );
 
 }
 
@@ -184,20 +195,28 @@ function give_load_admin_scripts( $hook ) {
 	$suffix = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
 
 	//CSS
-	wp_enqueue_style( 'jquery-ui-css', $css_dir . 'jquery-ui-fresh' . $suffix . '.css' );
-	wp_enqueue_style( 'give-admin', $css_dir . 'give-admin' . $suffix . '.css', GIVE_VERSION );
-	wp_enqueue_style( 'jquery-chosen', $css_dir . 'chosen' . $suffix . '.css', array(), GIVE_VERSION );
+	wp_register_style( 'jquery-ui-css', $css_dir . 'jquery-ui-fresh' . $suffix . '.css' );
+	wp_enqueue_style( 'jquery-ui-css' );
+	wp_register_style( 'give-admin', $css_dir . 'give-admin' . $suffix . '.css', GIVE_VERSION );
+	wp_enqueue_style( 'give-admin' );
+	wp_register_style( 'jquery-chosen', $css_dir . 'chosen' . $suffix . '.css', array(), GIVE_VERSION );
+	wp_enqueue_style( 'jquery-chosen' );
 	wp_enqueue_style( 'thickbox' );
 
 	//JS
-	wp_enqueue_script( 'jquery-chosen', $js_plugins . 'chosen.jquery' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
-	wp_enqueue_script( 'give-admin-scripts', $js_dir . 'admin-scripts' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION, false );
+	wp_register_script( 'jquery-chosen', $js_plugins . 'chosen.jquery' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION );
+	wp_enqueue_script( 'jquery-chosen' );
+	wp_register_script( 'give-admin-scripts', $js_dir . 'admin-scripts' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION, false );
+	wp_enqueue_script( 'give-admin-scripts' );
+	wp_register_script( 'jquery-flot', $js_plugins . 'jquery.flot' . $suffix . '.js' );
+	wp_enqueue_script( 'jquery-flot' );
 	wp_enqueue_script( 'jquery-ui-datepicker' );
 	wp_enqueue_script( 'thickbox' );
 
 	//Forms CPT Script
 	if ( $post_type === 'give_forms' ) {
-		wp_enqueue_script( 'give-admin-forms-scripts', $js_dir . 'admin-forms' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION, false );
+		wp_register_script( 'give-admin-forms-scripts', $js_dir . 'admin-forms' . $suffix . '.js', array( 'jquery' ), GIVE_VERSION, false );
+		wp_enqueue_script( 'give-admin-forms-scripts' );
 	}
 
 	//Localize strings & variables for JS
@@ -211,7 +230,7 @@ function give_load_admin_scripts( $hook ) {
 		'revoke_api_key'          => __( 'Are you sure you wish to revoke this API key?', 'give' ),
 		'regenerate_api_key'      => __( 'Are you sure you wish to regenerate this API key?', 'give' ),
 		'resend_receipt'          => __( 'Are you sure you wish to resend the donation receipt?', 'give' ),
-		'copy_download_link_text' => __( 'Copy these links to your clipboard and give them to your customer', 'give' ),
+		'copy_download_link_text' => __( 'Copy these links to your clipboard and give them to your donor', 'give' ),
 		'delete_payment_download' => sprintf( __( 'Are you sure you wish to delete this %s?', 'give' ), give_get_forms_label_singular() ),
 		'one_price_min'           => __( 'You must have at least one price', 'give' ),
 		'one_file_min'            => __( 'You must have at least one file', 'give' ),
@@ -278,7 +297,7 @@ function give_admin_icon() {
 		<?php }  ?>
 
 	</style>
-<?php
+	<?php
 }
 
 add_action( 'admin_head', 'give_admin_icon' );

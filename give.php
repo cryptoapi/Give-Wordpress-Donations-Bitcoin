@@ -5,7 +5,7 @@
  * Description: The most robust, flexible, and intuitive way to accept donations on WordPress.
  * Author: WordImpress
  * Author URI: http://wordimpress.com
- * Version: 0.9.5.1 beta
+ * Version: 1.0 beta
  * Text Domain: give
  * Domain Path: /languages
  *
@@ -52,18 +52,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! class_exists( 'Give' ) ) : /**
- * Main GIVE Class
+ * Main Give Class
  *
  * @since 1.0
  */ {
 	final class Give {
 		/** Singleton *************************************************************/
 
+
 		/**
 		 * @var Give The one true Give
 		 * @since 1.0
 		 */
 		private static $instance;
+
+		/**
+		 * Give Roles Object
+		 *
+		 * @var object
+		 * @since 1.0
+		 */
+		public $roles;
 
 		/**
 		 * Give Settings Object
@@ -73,6 +82,41 @@ if ( ! class_exists( 'Give' ) ) : /**
 		 */
 		public $give_settings;
 
+		/**
+		 * Give Session Object
+		 *
+		 * This holds donation data for user's session
+		 *
+		 * @var object
+		 * @since 1.0
+		 */
+		public $session;
+
+		/**
+		 * Give HTML Element Helper Object
+		 *
+		 * @var object
+		 * @since 1.0
+		 */
+		public $html;
+
+		
+		/**
+		 * Give Emails Object
+		 *
+		 * @var object
+		 * @since 1.0
+		 */
+		public $emails;
+	
+		/**
+		 * Give Email Template Tags Object
+		 *
+		 * @var object
+		 * @since 1.0
+		 */
+		public $email_tags;
+	
 		/**
 		 * Give Customers DB Object
 		 *
@@ -106,12 +150,12 @@ if ( ! class_exists( 'Give' ) ) : /**
 				self::$instance->includes();
 				self::$instance->roles              = new Give_Roles();
 				self::$instance->give_settings      = new Give_Plugin_Settings();
-				self::$instance->customers          = new Give_DB_Customers();
 				self::$instance->session            = new Give_Session();
 				self::$instance->html               = new Give_HTML_Elements();
 				self::$instance->emails             = new Give_Emails();
 				self::$instance->email_tags         = new Give_Email_Template_Tags();
 				self::$instance->donators_gravatars = new Give_Donators_Gravatars();
+				self::$instance->customers          = new Give_DB_Customers();
 
 			}
 
@@ -156,7 +200,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 
 			// Plugin version
 			if ( ! defined( 'GIVE_VERSION' ) ) {
-				define( 'GIVE_VERSION', '0.9.5.1' );
+				define( 'GIVE_VERSION', '1.0' );
 			}
 
 			// Plugin Folder Path
@@ -203,6 +247,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 			require_once GIVE_PLUGIN_DIR . 'includes/class-give-donate-form.php';
 			require_once GIVE_PLUGIN_DIR . 'includes/class-give-db.php';
 			require_once GIVE_PLUGIN_DIR . 'includes/class-give-db-customers.php';
+			require_once GIVE_PLUGIN_DIR . 'includes/class-give-customer.php';
 			require_once GIVE_PLUGIN_DIR . 'includes/class-give-stats.php';
 			require_once GIVE_PLUGIN_DIR . 'includes/class-give-session.php';
 			require_once GIVE_PLUGIN_DIR . 'includes/class-give-html-elements.php';
@@ -246,7 +291,7 @@ if ( ! class_exists( 'Give' ) ) : /**
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/admin-footer.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/welcome.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/admin-pages.php';
-				require_once GIVE_PLUGIN_DIR . 'includes/admin/admin-notices.php';
+				require_once GIVE_PLUGIN_DIR . 'includes/admin/class-admin-notices.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/admin-actions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/system-info.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/export-functions.php';
@@ -256,6 +301,9 @@ if ( ! class_exists( 'Give' ) ) : /**
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/actions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/payments/payments-history.php';
 
+				require_once GIVE_PLUGIN_DIR . 'includes/admin/customers/customers.php';
+				require_once GIVE_PLUGIN_DIR . 'includes/admin/customers/customer-functions.php';
+				require_once GIVE_PLUGIN_DIR . 'includes/admin/customers/customer-actions.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/metabox.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/dashboard-columns.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/forms/shortcode.php';
@@ -264,6 +312,9 @@ if ( ! class_exists( 'Give' ) ) : /**
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/pdf-reports.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/class-give-graph.php';
 				require_once GIVE_PLUGIN_DIR . 'includes/admin/reporting/graphing.php';
+
+				require_once GIVE_PLUGIN_DIR . 'includes/admin/upgrades/upgrade-functions.php';
+				require_once GIVE_PLUGIN_DIR . 'includes/admin/upgrades/upgrades.php';
 
 			}
 

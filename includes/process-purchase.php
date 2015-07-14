@@ -68,7 +68,7 @@ function give_process_purchase_form() {
 
 	// Setup purchase information
 	$purchase_data = array(
-		'price'        => ( isset( $_POST['give-amount'] ) ? (float) apply_filters( 'give_donation_total', give_sanitize_amount( give_format_amount($_POST['give-amount'] )) ) : '0.00' ),
+		'price'        => ( isset( $_POST['give-amount'] ) ? (float) apply_filters( 'give_donation_total', give_sanitize_amount( give_format_amount( $_POST['give-amount'] ) ) ) : '0.00' ),
 		'purchase_key' => strtolower( md5( $user['user_email'] . date( 'Y-m-d H:i:s' ) . $auth_key . uniqid( 'give', true ) ) ),
 		'user_email'   => $user['user_email'],
 		'date'         => date( 'Y-m-d H:i:s', current_time( 'timestamp' ) ),
@@ -450,7 +450,7 @@ function give_purchase_form_validate_new_user() {
 }
 
 /**
- * Purchase Form Validate User Login
+ * Donation Form Validate User Login
  *
  * @access      private
  * @since       1.0
@@ -488,7 +488,7 @@ function give_purchase_form_validate_user_login() {
 					'password_incorrect',
 					sprintf(
 						__( 'The password you entered is incorrect. %sReset Password%s', 'give' ),
-						'<a href="' . wp_lostpassword_url(  "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ) . '" title="' . __( 'Lost Password' ) . '">',
+						'<a href="' . wp_lostpassword_url( "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ) . '" title="' . __( 'Lost Password' ) . '">',
 						'</a>'
 					)
 				);
@@ -650,8 +650,8 @@ function give_get_purchase_form_user( $valid_data = array() ) {
 			 * This also allows the old login process to still work if a user removes the
 			 * checkout login submit button.
 			 *
-			 * This also ensures that the customer is logged in correctly if they click "Purchase"
-			 * instead of submitting the login form, meaning the customer is logged in during the purchase process.
+			 * This also ensures that the donor is logged in correctly if they click "Purchase"
+			 * instead of submitting the login form, meaning the donor is logged in during the purchase process.
 			 */
 
 			// Set user
@@ -982,7 +982,7 @@ function give_check_purchase_email( $valid_data, $posted ) {
 	}
 
 	if ( $is_banned ) {
-		// Set an error and give the customer a general error (don't alert them that they were banned)
+		// Set an error and give the donor a general error (don't alert them that they were banned)
 		give_set_error( 'email_banned', __( 'An internal error has occurred, please try again or contact support.', 'give' ) );
 	}
 }

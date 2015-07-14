@@ -1,8 +1,8 @@
 <?php
 /**
- * Customers Export Class
+ * Donors Export Class
  *
- * This class handles customer export
+ * This class handles donor export
  *
  * @package     Give
  * @subpackage  Admin/Reports
@@ -17,24 +17,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Give_Customers_Export Class
+ * Give_Donors_Export Class
  *
- * @since 1.4.4
+ * @since 1.0
  */
-class Give_Customers_Export extends Give_Export {
+class Give_Donors_Export extends Give_Export {
 	/**
 	 * Our export type. Used for export-type specific filters/actions
 	 *
 	 * @var string
-	 * @since 1.4.4
+	 * @since 1.0
 	 */
-	public $export_type = 'customers';
+	public $export_type = 'donors';
 
 	/**
 	 * Set the export headers
 	 *
 	 * @access public
-	 * @since  1.4.4
+	 * @since  1.0
 	 * @return void
 	 */
 	public function headers() {
@@ -52,7 +52,7 @@ class Give_Customers_Export extends Give_Export {
 
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=' . apply_filters( 'give_customers_export_filename', 'give-export-' . $extra . $this->export_type . '-' . date( 'm-d-Y' ) ) . '.csv' );
+		header( 'Content-Disposition: attachment; filename=' . apply_filters( 'give_donors_export_filename', 'give-export-' . $extra . $this->export_type . '-' . date( 'm-d-Y' ) ) . '.csv' );
 		header( "Expires: 0" );
 	}
 
@@ -60,7 +60,7 @@ class Give_Customers_Export extends Give_Export {
 	 * Set the CSV columns
 	 *
 	 * @access public
-	 * @since  1.4.4
+	 * @since  1.0
 	 * @return array $cols All the columns
 	 */
 	public function csv_cols() {
@@ -69,7 +69,7 @@ class Give_Customers_Export extends Give_Export {
 				'first_name' => __( 'First Name', 'give' ),
 				'last_name'  => __( 'Last Name', 'give' ),
 				'email'      => __( 'Email', 'give' ),
-				'date'       => __( 'Date Purchased', 'give' )
+				'date'       => __( 'Date Donated', 'give' )
 			);
 		} else {
 
@@ -82,8 +82,8 @@ class Give_Customers_Export extends Give_Export {
 			$cols['email'] = __( 'Email', 'give' );
 
 			if ( 'full' == $_POST['give_export_option'] ) {
-				$cols['purchases'] = __( 'Total Purchases', 'give' );
-				$cols['amount']    = __( 'Total Purchased', 'give' ) . ' (' . html_entity_decode( give_currency_filter( '' ) ) . ')';
+				$cols['purchases'] = __( 'Total Donations', 'give' );
+				$cols['amount']    = __( 'Total Donated', 'give' ) . ' (' . html_entity_decode( give_currency_filter( '' ) ) . ')';
 			}
 
 		}
@@ -107,7 +107,7 @@ class Give_Customers_Export extends Give_Export {
 
 		if ( ! empty( $_POST['give_export_download'] ) ) {
 
-			// Export customers of a specific product
+			// Export donors of a specific product
 			global $give_logs;
 
 			$args = array(
@@ -142,23 +142,23 @@ class Give_Customers_Export extends Give_Export {
 
 		} else {
 
-			// Export all customers
-			$customers = Give()->customers->get_customers( array( 'number' => - 1 ) );
+			// Export all donors
+			$donors = Give()->customers->get_donors( array( 'number' => - 1 ) );
 
 			$i = 0;
 
-			foreach ( $customers as $customer ) {
+			foreach ( $donors as $donor ) {
 
 				if ( 'emails' != $_POST['give_export_option'] ) {
-					$data[ $i ]['name'] = $customer->name;
+					$data[ $i ]['name'] = $donor->name;
 				}
 
-				$data[ $i ]['email'] = $customer->email;
+				$data[ $i ]['email'] = $donor->email;
 
 				if ( 'full' == $_POST['give_export_option'] ) {
 
-					$data[ $i ]['purchases'] = $customer->purchase_count;
-					$data[ $i ]['amount']    = give_format_amount( $customer->purchase_value );
+					$data[ $i ]['purchases'] = $donor->purchase_count;
+					$data[ $i ]['amount']    = give_format_amount( $donor->purchase_value );
 
 				}
 				$i ++;

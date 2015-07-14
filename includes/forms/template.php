@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function give_get_donation_form( $args = array() ) {
 
-	global $give_options, $post, $give_displayed_form_ids;
+	global $post;
 
 	$post_id = is_object( $post ) ? $post->ID : 0;
 
@@ -248,7 +248,7 @@ function give_output_donation_levels( $form_id = 0, $args = array() ) {
 			?>
 			<span id="give-amount" class="give-text-input"><?php echo give_format_amount( $default_amount ); ?></span>
 		</p>
-	<?php
+		<?php
 	} else {
 		//Custom Amount Allowed
 		?>
@@ -320,7 +320,7 @@ function give_output_levels( $form_id ) {
 
 				$output .= '<li>';
 				$output .= '<button type="button" data-price-id="' . $price['_give_id']['level_id'] . '" class="give-donation-level-btn give-btn give-btn-level-' . $counter . ' ' . ( ( isset( $price['_give_default'] ) && $price['_give_default'] === 'default' ) ? 'give-default-level' : '' ) . '" value="' . give_format_amount( $price['_give_amount'] ) . '">';
-				$output .= ( ! empty( $price['_give_text'] ) ? $price['_give_text'] : $price['_give_price'] );
+				$output .= ( ! empty( $price['_give_text'] ) ? $price['_give_text'] : give_currency_filter( $price['_give_amount'] ) );
 				$output .= '</button>';
 				$output .= '</li>';
 
@@ -350,7 +350,7 @@ function give_output_levels( $form_id ) {
 
 				$output .= '<input type="radio" data-price-id="' . $price['_give_id']['level_id'] . '" class="give-radio-input give-radio-input-level give-radio-level-' . $counter . ( ( isset( $price['_give_default'] ) && $price['_give_default'] === 'default' ) ? ' give-default-level' : '' ) . '" name="give-radio-donation-level" id="give-radio-level-' . $counter . '" ' . ( ( isset( $price['_give_default'] ) && $price['_give_default'] === 'default' ) ? 'checked="checked"' : '' ) . ' value="' . give_format_amount( $price['_give_amount'] ) . '">';
 
-				$output .= '<label for="give-radio-level-' . $counter . '">' . ( ! empty( $price['_give_text'] ) ? $price['_give_text'] : $price['_give_price'] ) . '</label>';
+				$output .= '<label for="give-radio-level-' . $counter . '">' . ( ! empty( $price['_give_text'] ) ? $price['_give_text'] : give_currency_filter( $price['_give_amount'] ) ) . '</label>';
 
 				$output .= '</li>';
 
@@ -376,7 +376,7 @@ function give_output_levels( $form_id ) {
 			foreach ( $prices as $price ) {
 
 				$output .= '<option data-price-id="' . $price['_give_id']['level_id'] . '" class="give-donation-level-' . $form_id . '" ' . ( ( isset( $price['_give_default'] ) && $price['_give_default'] === 'default' ) ? 'selected="selected"' : '' ) . ' value="' . give_format_amount( $price['_give_amount'] ) . '">';
-				$output .= ( ! empty( $price['_give_text'] ) ? $price['_give_text'] : $price['_give_price'] );
+				$output .= ( ! empty( $price['_give_text'] ) ? $price['_give_text'] : give_currency_filter( $price['_give_amount'] ) );
 				$output .= '</option>';
 
 			}
@@ -484,7 +484,7 @@ function give_user_info_fields( $form_id ) {
 
 		<?php do_action( 'give_purchase_form_user_info', $form_id ); ?>
 	</fieldset>
-<?php
+	<?php
 }
 
 add_action( 'give_purchase_form_after_user_info', 'give_user_info_fields' );
@@ -951,10 +951,11 @@ add_action( 'give_payment_mode_select', 'give_payment_mode_select' );
 function give_terms_agreement( $form_id ) {
 
 	$form_option = get_post_meta( $form_id, '_give_terms_option', true );
+	$label       = get_post_meta( $form_id, '_give_agree_label', true );
+	$terms       = get_post_meta( $form_id, '_give_agree_text', true );
 
-	if ( $form_option === 'yes' ) {
-		$label = get_post_meta( $form_id, '_give_agree_label', true );
-		$terms = get_post_meta( $form_id, '_give_agree_text', true );
+	if ( $form_option === 'yes' && ! empty( $terms ) ) {
+
 		?>
 		<fieldset id="give_terms_agreement">
 			<div id="give_terms" style="display:none;">
@@ -968,10 +969,11 @@ function give_terms_agreement( $form_id ) {
 				<a href="#" class="give_terms_links"><?php _e( 'Show Terms', 'give' ); ?></a>
 				<a href="#" class="give_terms_links" style="display:none;"><?php _e( 'Hide Terms', 'give' ); ?></a>
 			</div>
-			<label for="give_agree_to_terms"><?php echo isset( $terms ) ? stripslashes( $label ) : __( 'Agree to Terms?', 'give' ); ?></label>
+
+			<label for="give_agree_to_terms"><?php echo ! empty( $label ) ? stripslashes( $label ) : __( 'Agree to Terms?', 'give' ); ?></label>
 			<input name="give_agree_to_terms" class="required" type="checkbox" id="give_agree_to_terms" value="1" />
 		</fieldset>
-	<?php
+		<?php
 	}
 }
 
@@ -1004,7 +1006,7 @@ function give_checkout_final_total( $form_id ) {
 		<span class="give-donation-total-label"><?php echo apply_filters( 'give_donation_total_label', __( 'Donation Total:', 'give' ) ); ?></span>
 		<span class="give-final-total-amount" data-total="<?php echo give_format_amount( $total ); ?>"><?php echo give_currency_filter( give_format_amount( $total ) ); ?></span>
 	</p>
-<?php
+	<?php
 }
 
 add_action( 'give_purchase_form_before_submit', 'give_checkout_final_total', 999 );
@@ -1031,7 +1033,7 @@ function give_checkout_submit( $form_id ) {
 		<?php do_action( 'give_purchase_form_after_submit', $form_id ); ?>
 
 	</fieldset>
-<?php
+	<?php
 }
 
 add_action( 'give_purchase_form_after_cc_form', 'give_checkout_submit', 9999 );
@@ -1091,7 +1093,7 @@ function give_agree_to_terms_js( $form_id ) {
 				} );
 			} );
 		</script>
-	<?php
+		<?php
 	}
 }
 
@@ -1117,6 +1119,52 @@ function give_form_content( $form_id ) {
 }
 
 add_action( 'give_pre_form_output', 'give_form_content', 10, 2 );
+
+/**
+ * Show Give Goals
+ * @since 1.0
+ *
+ * @param int $form_id
+ *
+ * @return bool
+ */
+
+function give_show_goal_progress( $form_id ) {
+
+	$goal_option = get_post_meta( $form_id, '_give_goal_option', true );
+	$form        = new Give_Donate_Form( $form_id );
+	$goal        = $form->goal;
+	$income      = $form->get_earnings();
+	$color       = get_post_meta( $form_id, '_give_goal_color', true );
+
+	if ( empty( $form->ID ) || $goal_option !== 'yes' || $goal == 0 ) {
+		return false;
+	}
+
+	$progress = round( ( $income / $goal ) * 100, 2 );
+
+	if ( $income > $goal ) {
+		$progress = 100;
+	}
+
+	$output = '<div class="goal-progress">';
+	$output .= '<div class="raised">';
+	$output .= sprintf( _x( '%s of %s raised', 'give', 'This text displays the amount of income raised compared to the goal.' ), '<span class="income">' . give_currency_filter( give_format_amount( $income ) ) . '</span>', '<span class="goal-text">' . give_currency_filter( give_format_amount( $goal ) ) ) . '</span>';
+	$output .= '</div>';
+	$output .= '<div class="progress-bar">';
+
+	$output .= '<span style="width: ' . esc_attr( $progress ) . '%;';
+	if ( ! empty( $color ) ) {
+		$output .= 'background-color:' . $color;
+	}
+	$output .= '"></span>';
+	$output .= '</div></div><!-- /.goal-progress -->';
+
+	echo apply_filters( 'give_goal_output', $output );
+
+}
+
+add_action( 'give_pre_form', 'give_show_goal_progress', 10, 2 );
 
 /**
  * Renders Post Form Content
@@ -1159,7 +1207,7 @@ function give_checkout_hidden_fields( $form_id ) {
 	<?php } ?>
 	<input type="hidden" name="give_action" value="purchase" />
 	<input type="hidden" name="give-gateway" value="<?php echo give_get_chosen_gateway( $form_id ); ?>" />
-<?php
+	<?php
 }
 
 /**

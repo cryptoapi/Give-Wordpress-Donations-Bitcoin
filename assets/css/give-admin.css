@@ -570,9 +570,7 @@ div.cmb-type-levels-repeater-header + div.cmb-repeat-group-wrap {
   padding: 5px 8px; }
 
 .give-money-symbol-before {
-  border-right: 0;
-  position: relative;
-  right: -1px; }
+  border-right: 0; }
 
 .give-money-symbol-after {
   border-left: 0; }
@@ -656,7 +654,7 @@ p.give-level-id {
   p.give-level-id {
     margin: 6px 0 0; }
   .col-amount {
-    width: 100px; }
+    width: 85px; }
   .col-text {
     width: 195px; }
   .col-sort {
@@ -881,7 +879,7 @@ body.give_forms_page_give-reports h3.reports-earnings-title, body.give_forms_pag
   margin: 7px 0 0; }
 body.give_forms_page_give-reports .reports-views-wrap, body.give_forms_page_give-payment-history .reports-views-wrap {
   padding: 3px 0 0; }
-body.give_forms_page_give-reports .wrap.give-reports-customers-wrap, body.give_forms_page_give-payment-history .wrap.give-reports-customers-wrap {
+body.give_forms_page_give-reports .wrap.give-reports-donors-wrap, body.give_forms_page_give-payment-history .wrap.give-reports-donors-wrap {
   margin-right: 0;
   margin-bottom: 10px; }
 body.give_forms_page_give-reports .widefat tbody td, body.give_forms_page_give-reports .widefat tbody th, body.give_forms_page_give-payment-history .widefat tbody td, body.give_forms_page_give-payment-history .widefat tbody th {
@@ -999,7 +997,7 @@ Logs
  * @copyright   Copyright (c) 2015, WordImpress
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
 */
-#give_customer_export_download {
+#give_donor_export_download {
   margin: 0 0 5px; }
 
 /**
@@ -1278,7 +1276,7 @@ Responsiveness
 #give-donation-overview .give-select-chosen {
   width: 196px; }
 
-#give-donation-overview ul, #give-order-address-country-wrap select, #give-customer-details .order-data-address input, #give-edit-order-form .column input, #give-customer-details .order-data-column p.data input {
+#give-donation-overview ul, #give-order-address-country-wrap select, #give-donor-details .order-data-address input, #give-edit-order-form .column input, #give-donor-details .order-data-column p.data input {
   clear: both;
   display: block; }
 
@@ -1369,6 +1367,13 @@ Responsiveness
   #give-edit-order-form .column strong {
     display: block; } }
 
+/*------------------------------------------
+Donation Details
+--------------------------------------------*/
+#give-customer-details .inside {
+  padding-top: 15px;
+  padding-bottom: 15px; }
+
 /**
  * Give Admin Dashboard SCSS
  *
@@ -1425,6 +1430,229 @@ Responsiveness
   border-right: 1px solid #ececec; }
 #give_dashboard_sales .give-table-stats tr#give-table-stats-tr-1 td {
   border-bottom: 1px solid #ececec; }
+
+/**
+ * Give Forms SCSS
+ *
+ * @package     Give
+ * @subpackage  SCSS/Admin
+ * @copyright   Copyright (c) 2015, WordImpress
+ * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+*/
+/* Donors Listing Page Style
+-------------------------------------------------------------- */
+.give_forms_page_give-donors .wrap > h2 {
+  margin-bottom: 15px; }
+.give_forms_page_give-donors #give-donors-filter {
+  position: relative; }
+  .give_forms_page_give-donors #give-donors-filter p.search-box {
+    float: left;
+    margin: 0; }
+.give_forms_page_give-donors .tablenav.top {
+  float: right;
+  clear: none; }
+
+/* Donor Styles
+-------------------------------------------------------------- */
+#customer-tab-wrapper-list {
+  border-bottom: 1px solid #ccc;
+  padding: 5px 15px 0 10px; }
+  #customer-tab-wrapper-list li {
+    display: inline-block;
+    margin: 0 0 -1px;
+    padding: 0; }
+    #customer-tab-wrapper-list li a {
+      padding: 6px 10px;
+      font-weight: bold;
+      font-size: 15px;
+      line-height: 24px;
+      border: 1px solid #ccc;
+      border-bottom: none;
+      background: #e4e4e4;
+      color: #555;
+      display: inline-block;
+      text-decoration: none;
+      margin: 0; }
+  #customer-tab-wrapper-list .active {
+    padding: 6px 10px;
+    font-weight: bold;
+    font-size: 15px;
+    line-height: 24px;
+    border: 1px solid #ccc;
+    border-bottom: 1px solid #f1f1f1;
+    background: #f1f1f1;
+    color: #000; }
+  #customer-tab-wrapper-list .dashicons {
+    font-size: 20px;
+    line-height: 26px; }
+
+#give-customer-card-wrapper {
+  margin-left: -1px;
+  z-index: 2;
+  min-height: 200px; }
+  #give-customer-card-wrapper input {
+    font-weight: normal; }
+  #give-customer-card-wrapper .customer-section {
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px; }
+  #give-customer-card-wrapper .customer-section table {
+    margin-bottom: 0; }
+  #give-customer-card-wrapper > div:first-child {
+    padding-top: 20px; }
+  #give-customer-card-wrapper > div:last-child {
+    padding-bottom: 20px;
+    border: none; }
+  #give-customer-card-wrapper .avatar-wrap {
+    padding: 0 15px 15px 0;
+    text-align: center;
+    float: left; }
+    #give-customer-card-wrapper .avatar-wrap img {
+      border-radius: 3px; }
+  #give-customer-card-wrapper a.delete {
+    text-decoration: none;
+    color: #ff0000;
+    margin-right: 5px; }
+  #give-customer-card-wrapper .donor-bio-header {
+    float: left;
+    width: 33%; }
+    #give-customer-card-wrapper .donor-bio-header .customer-since {
+      margin: 10px 0;
+      font-size: 16px; }
+    #give-customer-card-wrapper .donor-bio-header .customer-id {
+      font-size: 24px;
+      font-weight: 600;
+      float: left;
+      margin-right: 10px; }
+    #give-customer-card-wrapper .donor-bio-header .customer-edit-link {
+      margin-bottom: 15px;
+      float: left; }
+
+.customer-main-wrapper {
+  margin: 0 0 20px; }
+  @media (max-width: 655px) {
+    .customer-main-wrapper {
+      width: 100%; } }
+  .customer-main-wrapper table {
+    margin: 0; }
+  .customer-main-wrapper input {
+    width: 200px; }
+
+#donor-summary {
+  padding: 0 20px; }
+  #donor-summary:after {
+    font-family: "dashicons";
+    content: "\f110";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 100px;
+    color: #F0F0F0;
+    z-index: 0; }
+
+#give-customer-card-wrapper .customer-address-wrapper {
+  width: 202px; }
+
+#give-customer-card-wrapper .customer-address-wrapper select {
+  width: 200px; }
+
+#give-customer-card-wrapper .customer-info {
+  margin-top: 1px;
+  min-height: 185px; }
+
+#give-customer-card-wrapper .info-wrapper {
+  min-height: 125px; }
+
+.customer-info .customer-name {
+  font-size: 24px;
+  font-weight: 600; }
+
+.disconnect-user a {
+  font-size: 12px;
+  font-weight: normal;
+  text-decoration: none; }
+
+#customer-edit-actions {
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 28px; }
+
+#customer-edit-actions .button-secondary {
+  margin-right: 10px; }
+
+#give-customer-card-wrapper .edit-item {
+  display: none; }
+
+#give-customer-card-wrapper .give_user_search_results {
+  left: 1px;
+  top: 16px; }
+
+#give-customer-card-wrapper .give_user_search_results ul {
+  width: 200px; }
+
+#customer-stats-wrapper {
+  margin: 0 auto;
+  text-align: center;
+  padding: 15px; }
+  #customer-stats-wrapper ul {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; }
+    #customer-stats-wrapper ul li {
+      width: 50%;
+      float: left;
+      line-height: 22px;
+      font-size: 14px;
+      margin: 0; }
+  #customer-stats-wrapper a {
+    text-decoration: none; }
+
+#customer-stats-wrapper .dashicons {
+  color: #888; }
+
+#customer-tables-wrapper table {
+  width: 100%;
+  text-align: center; }
+
+#customer-tables-wrapper th {
+  text-align: center; }
+
+#customer-tables-wrapper .downloads tr > th:first-child, #customer-tables-wrapper .downloads tr > td:first-child {
+  text-align: left; }
+
+#customer-tables-wrapper .downloads tr > td:only-child {
+  text-align: center; }
+
+#customer-notes-wrapper {
+  min-height: 50px; }
+
+.customer-notes-header span, .customer-notes-header img {
+  font-weight: 600;
+  line-height: 30px;
+  vertical-align: middle; }
+
+.customer-note-input {
+  width: 100%;
+  margin-bottom: 5px; }
+
+#give-customer-notes div:nth-of-type(even) {
+  background-color: #f9f9f9; }
+#give-customer-notes .customer-note-wrapper {
+  border-bottom: 1px solid #f9f9f9;
+  min-height: 38px;
+  padding: 0; }
+  #give-customer-notes .customer-note-wrapper .note-content-wrap {
+    padding: 10px 12px;
+    line-height: 20px;
+    font-size: 14px; }
+#give-customer-notes .give-no-customer-notes {
+  text-align: center;
+  padding: 20px; }
+
+.customer-note-wrapper span {
+  display: block; }
+
+.delete-customer {
+  text-align: center; }
 
 
 /*# sourceMappingURL=give-admin.css.map */
