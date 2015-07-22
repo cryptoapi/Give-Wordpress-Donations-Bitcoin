@@ -47,7 +47,7 @@ For new users, we suggest reviewing our [documentation](https://givewp.com/docum
 
 = Zero Commission Charges =
 
-We earn money by selling add-ons. The money you raise using Give is yours to go to support your cause. Period. Add-ons are premium features that enable you to extend the functionality of Give. For example, you use one of our add-ons to accept funds through your favorite payment gateway.
+We earn money by selling add-ons. The money you raise using Give is yours to go to support your cause. Period. Add-ons are premium features that enable you to extend the functionality of Give. For example, you can use one of our add-ons to accept funds through your favorite payment gateway or send new donor emails to MailChimp. [View all add-ons](https://givewp.com/addons "View all Give add-ons") to discover all the ways you can extend Give.
 
 = Easy to Customize and Enhance =
 
@@ -58,14 +58,15 @@ Give is built by [WordImpress](http://wordimpress.com "Visit the the developers 
 Stay in touch with us for important plugin news and updates:
 
 * **[Give Website](https://givewp.com "Visit the the Give website")**
-* **[Newsletter](http://eepurl.com/bggG99 "Subscribe via MailChimp")**
+* **[Give Add-ons](https://givewp.com/addons "View all Give add-ons")**
+* **[Newsletter](http://eepurl.com/bggG99 "Subscribe to Give via MailChimp")**
 * **[Facebook](http://facebook.com/wpgive "Visit the Give on Facebook")**
 * **[GitHub](https://github.com/WordImpress/Give "Visit the the developers of Give - WordImpress")**
 * **[WordImpress](http://wordimpress.com "Visit the the developers of Give - WordImpress")**
 
 = Contribute to Give =
 
-This plugin is open source and we're always looking for more contributors. Whether you know another language, can code like no ones business, or just have an idea, we would love your help and input. To contribute to Give please head over to our website or view/fork/watch the GitHub repository to learn more about what issues we're tackling and about the project.
+This plugin is open source and we're always looking for more contributors. Whether you know another language, can code like no ones business, or just have an idea, we would love your help and input. To contribute to Give please head over to [our website](https://givewp.com "Visit the the Give website") or view/fork/watch the [GitHub repository](github.com/WordImpress/Give "Visit the the Give GitHub Repo") to learn more about what issues we're tackling and the project is developing.
 
 = A Tribute to Open Source =
 
