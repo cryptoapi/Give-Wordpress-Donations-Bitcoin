@@ -4,7 +4,7 @@ Donate link: http://givewp.com/
 Tags: donation, donations, donation plugin, wordpress donation plugin, wp donation, ecommerce, e-commerce, fundraising, fundraiser, crowdfunding, wordpress donations, commerce, wordpress ecommerce, giving, charity, donate, gifts, non-profit, paypal, stripe, churches, nonprofit, paypal donations, paypal donate, stripe donations, stripe donate, authorize.net, authorize.net donations
 Requires at least: 3.8
 Tested up to: 4.2.2
-Stable tag: 1.0.1
+Stable tag: 1.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -127,6 +127,14 @@ We also really like WooCommerce. It's hands-down the most robust eCommerce platf
 4. Multi-level donations
 
 == Changelog ==
+
+= 1.1 =
+* New: A front-facing JSON/XML API that makes it possible to query donation data directly from your WordPress site; this corresponds with the Zapier Add-on for Give: http://givewp.com/addons/zapier/
+* New: Added warning to frontend donation forms when test mode is enabled
+* Improvement: PalPal Standard now displays the multi-level text within PayPal @see: https://github.com/WordImpress/Give/issues/164
+* Tweak: Moved the "Test Mode" option out from General Settings to Payment Gateways > Gateway Settings from better visibility
+* Tweak: Removed "Cancelled" and "Pre-Approved" payment statuses; "Failed" and "Pending" statuses should be used in their place.
+* Fix: Ensure CMB2 loads text domain properly @see: https://github.com/WebDevStudios/CMB2/issues/400
 
 = 1.0.1 =
 * Fix: Admin fatal error call to undefined method "get_donors" when it should've actually been "get_customers"

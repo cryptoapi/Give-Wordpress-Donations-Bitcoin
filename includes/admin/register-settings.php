@@ -54,6 +54,7 @@ class Give_Plugin_Settings {
 		add_action( 'cmb2_render_default_gateway', 'give_default_gateway_callback', 10, 5 );
 		add_action( 'cmb2_render_email_preview_buttons', 'give_email_preview_buttons_callback', 10, 5 );
 		add_action( 'cmb2_render_system_info', 'give_system_info_callback', 10, 5 );
+		add_action( 'cmb2_render_api', 'give_api_callback', 10, 5 );
 		add_action( 'cmb2_render_license_key', 'give_license_key_callback', 10, 5 );
 
 	}
@@ -106,8 +107,8 @@ class Give_Plugin_Settings {
 			$tabs['licenses'] = __( 'Licenses', 'give' );
 		}
 
-		$tabs['advanced'] = __( 'Advanced', 'give' );
-
+		$tabs['advanced']    = __( 'Advanced', 'give' );
+		$tabs['api']         = __( 'API', 'give' );
 		$tabs['system_info'] = __( 'System Info', 'give' );
 
 		return apply_filters( 'give_settings_tabs', $tabs );
@@ -148,7 +149,7 @@ class Give_Plugin_Settings {
 
 		</div><!-- .wrap -->
 
-	<?php
+		<?php
 	}
 
 	/**
@@ -178,12 +179,6 @@ class Give_Plugin_Settings {
 							'id'   => 'give_title_general_settings_1'
 						),
 						array(
-							'name' => __( 'Test Mode', 'give' ),
-							'desc' => __( 'While in test mode no live transactions are processed. To fully use test mode, you must have a sandbox (test) account for the payment gateway you are testing.', 'give' ),
-							'id'   => 'test_mode',
-							'type' => 'checkbox'
-						),
-						array(
 							'name'    => __( 'Success Page', 'give' ),
 							'desc'    => __( 'This is the page donators are sent to after completing their donations. The <code>[give_receipt]</code> shortcode should be on this page.', 'give' ),
 							'id'      => 'success_page',
@@ -195,7 +190,7 @@ class Give_Plugin_Settings {
 						),
 						array(
 							'name'    => __( 'Failed Transaction Page', 'give' ),
-							'desc'    => __( 'This is the page donators are sent to if their transaction is cancelled or fails.', 'give' ),
+							'desc'    => __( 'This is the page donors are sent to if their transaction is cancelled or fails.', 'give' ),
 							'id'      => 'failure_page',
 							'type'    => 'select',
 							'options' => give_cmb2_get_post_options( array(
@@ -275,6 +270,12 @@ class Give_Plugin_Settings {
 							'desc' => '<hr>',
 							'id'   => 'give_title_gateway_settings_1',
 							'type' => 'give_title'
+						),
+						array(
+							'name' => __( 'Test Mode', 'give' ),
+							'desc' => __( 'While in test mode no live transactions are processed. To fully use test mode, you must have a sandbox (test) account for the payment gateway you are testing.', 'give' ),
+							'id'   => 'test_mode',
+							'type' => 'checkbox'
 						),
 						array(
 							'name' => __( 'Enabled Gateways', 'give' ),
@@ -598,10 +599,25 @@ class Give_Plugin_Settings {
 						),
 						array(
 							'name' => __( 'Disable <code>the_content</code> filter', 'give' ),
-							'desc' =>  sprintf( __( 'If you are seeing extra social buttons, related posts, or other unwanted elements appearing within your forms then you can disable WordPress\' content filter. <a href="%s" target="_blank">Learn more</a> about the_content filter.', 'give' ), esc_url( 'https://codex.wordpress.org/Plugin_API/Filter_Reference/the_content' ) ),
+							'desc' => sprintf( __( 'If you are seeing extra social buttons, related posts, or other unwanted elements appearing within your forms then you can disable WordPress\' content filter. <a href="%s" target="_blank">Learn more</a> about the_content filter.', 'give' ), esc_url( 'https://codex.wordpress.org/Plugin_API/Filter_Reference/the_content' ) ),
 							'id'   => 'disable_the_content_filter',
 							'type' => 'checkbox'
 						),
+					)
+				)
+			),
+			/** API Settings */
+			'api'         => array(
+				'id'         => 'options_page',
+				'give_title' => __( 'API', 'give' ),
+				'show_on'    => array( 'key' => 'options-page', 'value' => array( $this->key, ), ),
+				'show_names' => false, // Hide field names on the left
+				'fields'     => apply_filters( 'give_settings_system', array(
+						array(
+							'id'   => 'api',
+							'name' => __( 'API', 'give' ),
+							'type' => 'api'
+						)
 					)
 				)
 			),
@@ -686,19 +702,22 @@ function give_get_option( $key = '', $default = false ) {
  *          the key from the give_options array.
  *
  * @since 1.0
- * @param string $key The Key to update
+ *
+ * @param string          $key   The Key to update
  * @param string|bool|int $value The value to set the key to
+ *
  * @return boolean True if updated, false if not.
  */
 function give_update_option( $key = '', $value = false ) {
 
 	// If no key, exit
-	if ( empty( $key ) ){
+	if ( empty( $key ) ) {
 		return false;
 	}
 
 	if ( empty( $value ) ) {
 		$remove_option = give_delete_option( $key );
+
 		return $remove_option;
 	}
 
@@ -710,10 +729,10 @@ function give_update_option( $key = '', $value = false ) {
 
 	// Next let's try to update the value
 	$options[ $key ] = $value;
-	$did_update = update_option( 'give_settings', $options );
+	$did_update      = update_option( 'give_settings', $options );
 
 	// If it updated, let's update the global variable
-	if ( $did_update ){
+	if ( $did_update ) {
 		global $give_options;
 		$give_options[ $key ] = $value;
 
@@ -728,13 +747,15 @@ function give_update_option( $key = '', $value = false ) {
  * Removes an give setting value in both the db and the global variable.
  *
  * @since 1.0
+ *
  * @param string $key The Key to delete
+ *
  * @return boolean True if updated, false if not.
  */
 function give_delete_option( $key = '' ) {
 
 	// If no key, exit
-	if ( empty( $key ) ){
+	if ( empty( $key ) ) {
 		return false;
 	}
 
@@ -742,7 +763,7 @@ function give_delete_option( $key = '' ) {
 	$options = get_option( 'give_settings' );
 
 	// Next let's try to update the value
-	if( isset( $options[ $key ] ) ) {
+	if ( isset( $options[ $key ] ) ) {
 
 		unset( $options[ $key ] );
 
@@ -751,7 +772,7 @@ function give_delete_option( $key = '' ) {
 	$did_update = update_option( 'give_settings', $options );
 
 	// If it updated, let's update the global variable
-	if ( $did_update ){
+	if ( $did_update ) {
 		global $give_options;
 		$give_options = $options;
 	}
@@ -872,9 +893,8 @@ function give_title_callback( $field_object, $escaped_value, $object_id, $object
 	$title             = $field_type_object->field->args['name'];
 	$field_description = $field_type_object->field->args['desc'];
 
-	?>
-	<hr>
-<?php
+	echo '<hr>';
+
 }
 
 /**
@@ -978,6 +998,46 @@ if ( ! function_exists( 'give_license_key_callback' ) ) {
 
 
 /**
+ * Display the API Keys
+ *
+ * @since       2.0
+ * @return      void
+ */
+function give_api_callback() {
+
+	if ( ! current_user_can( 'manage_give_settings' ) ) {
+		return;
+	}
+
+	do_action( 'give_tools_api_keys_before' );
+
+	require_once GIVE_PLUGIN_DIR . 'includes/admin/class-api-keys-table.php';
+
+	$api_keys_table = new Give_API_Keys_Table();
+	$api_keys_table->prepare_items();
+	$api_keys_table->display();
+	?>
+	<p>
+		<?php printf(
+			__( 'API keys allow users to use the <a href="%s">Give REST API</a> to retrieve donation data in JSON or XML for external applications or devices, such as <a href="%s">Zapier</a>.', 'give' ),
+			'https://givewp.com/documentation/give-api-reference/',
+			'https://givewp.com/addons/zapier/'
+		); ?>
+	</p>
+
+	<style>
+		.give_forms_page_give-settings .give-submit-wrap {
+			display: none; /* Hide Save settings button on System Info Tab (not needed) */
+		}
+	</style>
+	<?php
+
+	do_action( 'give_tools_api_keys_after' );
+}
+
+add_action( 'give_settings_tab_api_keys', 'give_api_callback' );
+
+/**
  * Hook Callback
  *
  * Adds a do_action() hook in place of the field
@@ -1002,3 +1062,4 @@ if ( file_exists( GIVE_PLUGIN_DIR . '/includes/libraries/cmb2/init.php' ) ) {
 } elseif ( file_exists( GIVE_PLUGIN_DIR . '/includes/libraries/CMB2/init.php' ) ) {
 	require_once GIVE_PLUGIN_DIR . '/includes/libraries/CMB2/init.php';
 }
+
