@@ -217,7 +217,7 @@ if (!function_exists('gourl_give_gateway_load'))
 				}
 				elseif (true === version_compare(GIVE_VERSION, '2.0.7', '>') || true === version_compare(GIVE_VERSION, '2.0.6', '<') || !(defined('GIVECORE_GOURL')))
 				{
-				    $give_ver = '<p><b>' .sprintf(__( "This Give version not support Bitcoin Gateway. Please DELETE current Give plugin and download/install Give plugin with Bitcoin Support ver2.0.6.x from <a href='%s'>Github here</a> &#187;", GOURLGV ), "https://github.com/cryptoapi/Give-Wordpress-Donations-Bitcoin").'</b></p>';
+				    $give_ver = '<p><b>' .sprintf(__( "This Give version not support Bitcoin Gateway! You can DELETE current Give plugin and download free Give plugin with Bitcoin Support ver2.0.6.x from <a href='%s'>Github here</a> &#187;", GOURLGV ), "https://github.com/cryptoapi/Give-Wordpress-Donations-Bitcoin").'</b></p>';
 				    $this->method_description .= '<div class="error">'.$give_ver.'</div>';
 				}
 				else
@@ -433,7 +433,16 @@ if (!function_exists('gourl_give_gateway_load'))
 					(array_key_exists($currency, $this->coin_names) && !array_key_exists($currency, $this->payments)))
 			{
 				echo '<h4>' . __( 'Information', GOURLGV ) . '</h4>' . PHP_EOL;
-				echo  "<div class='give_error'>".sprintf(__( 'Sorry, but there was an error processing your donation. Please try a different payment method or contact us if you need assistance (GoUrl Bitcoin Plugin not configured / %s not activated).', GOURLGV ),(!$this->payments || !$this->defcoin || !isset($this->coin_names[$currency])?$this->title:$this->coin_names[$currency]))."</div>";
+				
+				if (true === version_compare(GIVE_VERSION, '2.0.7', '>') || true === version_compare(GIVE_VERSION, '2.0.6', '<') || !(defined('GIVECORE_GOURL')))
+				{
+				    $give_ver = sprintf(__( "This Give version not support Bitcoin Gateway!<br>You can DELETE current Give plugin and <b>download free Give plugin with Bitcoin Support ver2.0.6.x from <a href='%s'>Github here</a> &#187;</b>", GOURLGV ), "https://github.com/cryptoapi/Give-Wordpress-Donations-Bitcoin");
+				    echo  "<div class='give_error'>".$give_ver."</div>";
+				}
+				else 
+				{
+				    echo  "<div class='give_error'>".sprintf(__( 'Sorry, but there was an error processing your donation. Please try a different payment method or contact us if you need assistance (GoUrl Bitcoin Plugin not configured / %s not activated).', GOURLGV ),(!$this->payments || !$this->defcoin || !isset($this->coin_names[$currency])?$this->title:$this->coin_names[$currency]))."</div>";
+				}
 												 
 			}
 			else 
@@ -642,5 +651,5 @@ if (!function_exists('gourl_give_gateway_load'))
 	
 	
 	}
-	// end gourl_give_gateway_load()        
+	// end gourl_give_gateway_load()     
 }
