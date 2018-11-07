@@ -4,12 +4,12 @@
  *
  * @package     Give
  * @subpackage  Admin/Footer
- * @copyright   Copyright (c) 2015, WordImpress
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -28,7 +28,11 @@ function give_admin_rate_us( $footer_text ) {
 	global $typenow;
 
 	if ( $typenow == 'give_forms' ) {
-		$rate_text = sprintf( __( 'If you like <strong>Give</strong> please leave us a %s&#9733;&#9733;&#9733;&#9733;&#9733;%s rating. It takes a minute and helps a lot. Thanks in advance!', 'give' ), '<a href="https://wordpress.org/support/view/plugin-reviews/give?filter=5#postform" target="_blank" class="give-rating-link" data-rated="' . __( 'Thanks :)', 'give' ) . '">', '</a>' );
+		$rate_text = sprintf(
+			/* translators: %s: Link to 5 star rating */
+			__( 'If you like <strong>Give</strong> please leave us a %s rating. It takes a minute and helps a lot. Thanks in advance!', 'give' ),
+			'<a href="https://wordpress.org/support/view/plugin-reviews/give?filter=5#postform" target="_blank" class="give-rating-link" style="text-decoration:none;" data-rated="' . esc_attr__( 'Thanks :)', 'give' ) . '">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
+		);
 
 		return $rate_text;
 	} else {

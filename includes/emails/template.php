@@ -4,24 +4,24 @@
  *
  * @package     Give
  * @subpackage  Emails
- * @copyright   Copyright (c) 2015, WordImpress
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Gets all the email templates that have been registerd. The list is extendable
+ * Gets all the email templates that have been registered. The list is extendable
  * and more templates can be added.
  *
  * This is simply a wrapper to Give_Email_Templates->get_templates()
  *
  * @since 1.0
- * @return array $templates All the registered email templates
+ * @return array $templates All the registered email templates.
  */
 function give_get_email_templates() {
 	$templates = new Give_Emails;
@@ -30,14 +30,15 @@ function give_get_email_templates() {
 }
 
 /**
- * Email Template Tags
+ * Email Template Tags.
+ * @todo Modify this function to remove payment id dependency.
  *
  * @since 1.0
  *
- * @param string $message      Message with the template tags
- * @param array  $payment_data Payment Data
- * @param int    $payment_id   Payment ID
- * @param bool   $admin_notice Whether or not this is a notification email
+ * @param string $message      Message with the template tags.
+ * @param array  $payment_data Payment Data.
+ * @param int    $payment_id   Payment ID.
+ * @param bool   $admin_notice Whether or not this is a notification email.
  *
  * @return string $message Fully formatted message
  */
@@ -46,230 +47,179 @@ function give_email_template_tags( $message, $payment_data, $payment_id, $admin_
 }
 
 /**
- * Email Preview Template Tags
+ * Email Preview Template Tags.
+ *
+ * Provides sample content for the preview email functionality within settings > email.
  *
  * @since 1.0
- * @global       $give_options Array of all the Give Options
  *
- * @param string $message      Email message with template tags
+ * @param string $message Email message with template tags
  *
  * @return string $message Fully formatted message
  */
 function give_email_preview_template_tags( $message ) {
-	global $give_options;
 
-	$price = give_currency_filter( give_format_amount( 10.50 ) );
+	$price = give_currency_filter( give_format_amount( 10.50, array( 'sanitize' => false ) ) );
 
 	$gateway = 'PayPal';
 
 	$receipt_id = strtolower( md5( uniqid() ) );
 
-	$notes = __( 'These are some sample notes added to a donation.', 'give' );
-
 	$payment_id = rand( 1, 100 );
+	$receipt_link_url = esc_url( add_query_arg( array( 'payment_key' => $receipt_id ), give_get_history_page_uri() ) );
 
+	$receipt_link     = sprintf(
+		'<a href="%1$s">%2$s</a>',
+		$receipt_link_url,
+		esc_html__( 'View the receipt in your browser &raquo;', 'give' )
+	);
+
+	// Set user.
 	$user = wp_get_current_user();
 
 	$message = str_replace( '{name}', $user->display_name, $message );
 	$message = str_replace( '{fullname}', $user->display_name, $message );
 	$message = str_replace( '{username}', $user->user_login, $message );
-	$message = str_replace( '{date}', date( get_option( 'date_format' ), current_time( 'timestamp' ) ), $message );
+	$message = str_replace( '{user_email}', $user->user_email, $message );
+	$message = str_replace( '{billing_address}', "123 Test Street, Unit 222\nSomewhere Town, CA, 92101", $message );
+	$message = str_replace( '{date}', date( give_date_format(), current_time( 'timestamp' ) ), $message );
+	$message = str_replace( '{amount}', $price, $message );
 	$message = str_replace( '{price}', $price, $message );
+	$message = str_replace( '{donation}', esc_html__( 'Sample Donation Form Title', 'give' ), $message );
+	$message = str_replace( '{form_title}', esc_html__( 'Sample Donation Form Title - Sample Donation Level', 'give' ), $message );
 	$message = str_replace( '{receipt_id}', $receipt_id, $message );
 	$message = str_replace( '{payment_method}', $gateway, $message );
 	$message = str_replace( '{sitename}', get_bloginfo( 'name' ), $message );
-	$message = str_replace( '{product_notes}', $notes, $message );
 	$message = str_replace( '{payment_id}', $payment_id, $message );
-	$message = str_replace( '{receipt_link}', sprintf( __( '%1$sView it in your browser.%2$s', 'give' ), '<a href="' . esc_url( add_query_arg( array(
-			'payment_key' => $receipt_id,
-			'give_action' => 'view_receipt'
-		), home_url() ) ) . '">', '</a>' ), $message );
+	$message = str_replace( '{receipt_link}', $receipt_link, $message );
+	$message = str_replace( '{receipt_link_url}', $receipt_link_url, $message );
+	$message = str_replace( '{pdf_receipt}', '<a href="#">Download Receipt</a>', $message );
 
 	return wpautop( apply_filters( 'give_email_preview_template_tags', $message ) );
 }
 
-/**
- * Filter for Email Template Preview Buttons
- *
- * @param array $array
- *
- * @access private
- * @global      $give_options Array of all the Give Options
- * @since  1.0
- * @return array|bool
- */
-add_filter( 'give_settings_emails', 'give_email_template_preview' );
 
-function give_email_template_preview( $array ) {
-
-	if ( ! current_user_can( 'manage_give_settings' ) ) {
-		return false;
-	}
-	$custom_field = array(
-		'name' => __( 'Preview Email', 'give' ),
-		'desc' => __( 'Click the buttons to preview emails.', 'give' ),
-		'id'   => 'give_email_preview_buttons',
-		'type' => 'email_preview_buttons'
-	);
-	array_splice( $array, 5, 0, array( $custom_field ) );
-
-	return $array; // splice in at position 3;
-}
 
 /**
- * Output Email Template Preview Buttons
+ * Output Email Template Preview Buttons.
  *
  * @access private
- * @global      $give_options Array of all the Give Options
  * @since  1.0
+ * @since  1.8 Field arguments param added.
+ *
+ * @param array $field Field arguments.
+ *
  * @return array
  */
-function give_email_preview_buttons_callback() {
+function give_email_preview_buttons_callback( $field ) {
+	$field_id = str_replace( '_preview_buttons', '', $field['id'] );
+
 	ob_start();
-	?>
-	<a href="<?php echo esc_url( add_query_arg( array( 'give_action' => 'preview_email' ), home_url() ) ); ?>" class="button-secondary" target="_blank" title="<?php _e( 'Donation Receipt Preview', 'give' ); ?> "><?php _e( 'Preview Donation Receipt', 'give' ); ?></a>
-	<a href="<?php echo wp_nonce_url( add_query_arg( array(
-		'give_action'  => 'send_test_email',
-		'give-message' => 'sent-test-email'
-	) ), 'give-test-email' ); ?>" title="<?php _e( 'This will send a demo donation receipt to the emails listed below.', 'give' ); ?>" class="button-secondary"><?php _e( 'Send Test Email', 'give' ); ?></a>
-	<?php
+
+	echo sprintf(
+		'<a href="%1$s" class="button-secondary" target="_blank">%2$s</a>',
+		wp_nonce_url(
+			add_query_arg(
+				array( 'give_action' => 'preview_email', 'email_type' => $field_id ),
+				home_url()
+			), 'give-preview-email'
+		),
+		$field['name']
+	);
+
+	echo sprintf(
+		' <a href="%1$s" aria-label="%2$s" class="button-secondary">%3$s</a>',
+		wp_nonce_url(
+				add_query_arg( array(
+			'give_action'  => 'send_preview_email',
+			'email_type' => $field_id,
+			'give-message' => 'sent-test-email',
+		) ), 'give-send-preview-email' ),
+		esc_attr__( 'Send Test Email.', 'give' ),
+		esc_html__( 'Send Test Email', 'give' )
+	);
+
 	echo ob_get_clean();
 }
 
-/**
- * Displays the email preview
- *
- * @since 1.0
- * @return void
- */
-function give_display_email_template_preview() {
-
-	if ( empty( $_GET['give_action'] ) ) {
-		return;
-	}
-
-	if ( 'preview_email' !== $_GET['give_action'] ) {
-		return;
-	}
-
-	if ( ! current_user_can( 'manage_give_settings' ) ) {
-		return;
-	}
-
-	Give()->emails->heading = __( 'Donation Receipt', 'give' );
-
-	echo Give()->emails->build_email( give_email_preview_template_tags( give_get_email_body_content( 0, array() ) ) );
-
-	exit;
-
-}
-
-add_action( 'template_redirect', 'give_display_email_template_preview' );
 
 /**
- * Email Template Body
+ * Give Preview Email Header.
  *
- * @since 1.0
+ * Displays a header bar with the ability to change donations to preview actual data within the preview. Will not display if
  *
- * @param int   $payment_id   Payment ID
- * @param array $payment_data Payment Data
+ * @since 1.6
  *
- * @return string $email_body Body of the email
  */
-function give_get_email_body_content( $payment_id = 0, $payment_data = array() ) {
-	global $give_options;
+function give_get_preview_email_header() {
 
-	$default_email_body = __( "Dear", "give" ) . " {name},\n\n";
-	$default_email_body .= __( "Thank you for your donation. Your generosity is appreciated! Please click on the link below to view your receipt.", "give" ) . "\n\n" . '{receipt_link}';
-	$default_email_body .= "\n\nSincerely,\n{sitename}";
+	//Payment receipt switcher
+	$payment_count = give_count_payments()->publish;
+	$payment_id    = give_check_variable( give_clean( $_GET ), 'isset', 0, 'preview_id' );
 
-	$email = isset( $give_options['donation_receipt'] ) ? stripslashes( $give_options['donation_receipt'] ) : $default_email_body;
-
-	$email_body = wpautop( $email );
-
-	$email_body = apply_filters( 'give_donation_receipt_' . Give()->emails->get_template(), $email_body, $payment_id, $payment_data );
-
-	return apply_filters( 'give_donation_receipt', $email_body, $payment_id, $payment_data );
-}
-
-/**
- * Sale Notification Template Body
- *
- * @since  1.0
- *
- * @param int   $payment_id   Payment ID
- * @param array $payment_data Payment Data
- *
- * @return string $email_body Body of the email
- */
-function give_get_donation_notification_body_content( $payment_id = 0, $payment_data = array() ) {
-	global $give_options;
-
-	$user_info = maybe_unserialize( $payment_data['user_info'] );
-	$email     = give_get_payment_user_email( $payment_id );
-
-	if ( isset( $user_info['id'] ) && $user_info['id'] > 0 ) {
-		$user_data = get_userdata( $user_info['id'] );
-		$name      = $user_data->display_name;
-	} elseif ( isset( $user_info['first_name'] ) && isset( $user_info['last_name'] ) ) {
-		$name = $user_info['first_name'] . ' ' . $user_info['last_name'];
-	} else {
-		$name = $email;
+	if ( $payment_count <= 0 ) {
+		return false;
 	}
 
-	$gateway = give_get_gateway_admin_label( get_post_meta( $payment_id, '_give_payment_gateway', true ) );
+	//Get payments.
+	$payments = new Give_Payments_Query( array(
+		'number' => 100,
+	) );
+	$payments = $payments->get_payments();
+	$options  = array();
 
-	$default_email_body = __( 'Hello', 'give' ) . "\n\n" . __( 'A donation has been made', 'give' ) . ".\n\n";
-	$default_email_body .= sprintf( __( '%s sold:', 'give' ), give_get_forms_label_plural() ) . "\n\n";
+	// Default option.
+	$options[0] = esc_html__( 'No donations found.', 'give' );
 
-	$default_email_body .= __( 'Donor: ', 'give' ) . " " . html_entity_decode( $name, ENT_COMPAT, 'UTF-8' ) . "\n";
-	$default_email_body .= __( 'Amount: ', 'give' ) . " " . html_entity_decode( give_currency_filter( give_format_amount( give_get_payment_amount( $payment_id ) ) ), ENT_COMPAT, 'UTF-8' ) . "\n";
-	$default_email_body .= __( 'Payment Method: ', 'give' ) . " " . $gateway . "\n\n";
+	//Provide nice human readable options.
+	if ( $payments ) {
+		$options[0] = esc_html__( '- Select a donation -', 'give' );
+		foreach ( $payments as $payment ) {
 
-	$default_email_body .= __( 'Thank you', 'give' );
+			$options[ $payment->ID ] = esc_html( '#' . $payment->ID . ' - ' . $payment->email . ' - ' . $payment->form_title );
 
-	$email = isset( $give_options['donation_notification'] ) ? stripslashes( $give_options['donation_notification'] ) : $default_email_body;
-
-	$email_body = give_do_email_tags( $email, $payment_id );
-
-	return apply_filters( 'give_donation_notification', wpautop( $email_body ), $payment_id, $payment_data );
-}
-
-/**
- * Render Receipt in the Browser
- *
- * A link is added to the Donation Receipt to view the email in the browser and
- * this function renders the Donation Receipt in the browser. It overrides the
- * Purchase Receipt template and provides its only styling.
- *
- * @since  1.0
- */
-function give_render_receipt_in_browser() {
-	if ( ! isset( $_GET['payment_key'] ) ) {
-		wp_die( __( 'Missing donation key.', 'give' ), __( 'Error', 'give' ) );
+		}
 	}
 
-	$key = urlencode( $_GET['payment_key'] );
+	//Start constructing HTML output.
+	$transaction_header = '<div style="margin:0;padding:10px 0;width:100%;background-color:#FFF;border-bottom:1px solid #eee; text-align:center;">';
 
-	ob_start();
-	?>
-	<!DOCTYPE html>
-	<html lang="en">
-	<title><?php _e( 'Receipt', 'give' ); ?></title>
-	<meta charset="utf-8" />
-	<?php wp_head(); ?>
-	</html>
-	<body class="<?php echo apply_filters( 'give_receipt_page_body_class', 'give_receipt_page' ); ?>">
-	<div id="give_receipt_wrapper">
-		<?php do_action( 'give_render_receipt_in_browser_before' ); ?>
-	<?php echo do_shortcode( '[give_receipt payment_key=' . $key . ']' ); ?>
-	<?php do_action( 'give_render_receipt_in_browser_after' ); ?>
-	</div>
-	<?php wp_footer(); ?>
-	</body>
-	<?php
-	echo ob_get_clean();
-	die();
+	// Remove payment id query param if set from request url.
+	$request_url_data = wp_parse_url( $_SERVER['REQUEST_URI'] );
+	$query            = $request_url_data['query'];
+	$query            = remove_query_arg( array( 'preview_id' ), $query );
+
+	$request_url = home_url( '/?' . str_replace( '', '', $query ) );
+
+	$transaction_header .= '<script>
+				 function change_preview(){
+				  var transactions = document.getElementById("give_preview_email_payment_id");
+			        var selected_trans = transactions.options[transactions.selectedIndex];
+				        if (selected_trans){
+				            var url_string = "' . $request_url . '&preview_id=" + selected_trans.value;
+				                window.location = url_string;
+				        }
+				    }
+			    </script>';
+
+	$transaction_header .= '<label for="give_preview_email_payment_id" style="font-size:12px;color:#333;margin:0 4px 0 0;">' . esc_html__( 'Preview email with a donation:', 'give' ) . '</label>';
+
+	//The select field with 100 latest transactions
+	$transaction_header .= Give()->html->select( array(
+		'name'             => 'preview_email_payment_id',
+		'selected'         => $payment_id,
+		'id'               => 'give_preview_email_payment_id',
+		'class'            => 'give-preview-email-payment-id',
+		'options'          => $options,
+		'chosen'           => false,
+		'select_atts'      => 'onchange="change_preview()"',
+		'show_option_all'  => false,
+		'show_option_none' => false,
+	) );
+
+	//Closing tag
+	$transaction_header .= '</div>';
+
+	return apply_filters( 'give_preview_email_receipt_header', $transaction_header );
+
 }
-
-add_action( 'give_view_receipt', 'give_render_receipt_in_browser' );

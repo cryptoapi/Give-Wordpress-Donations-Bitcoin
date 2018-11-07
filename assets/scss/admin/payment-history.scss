@@ -4,46 +4,197 @@
  * @description Payment History Styles
  * @package     Give
  * @subpackage  SCSS/Admin
- * @copyright   Copyright (c) 2015, WordImpress
+ * @copyright   Copyright (c) 2016, WordImpress
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
 */
 
-#give-payment-filters, .give-submit-wrap {
+//------------------------------------
+// Payment Filters
+//------------------------------------
+
+// Wrapper for multiple filter fields.
+.give-filters {
   clear: both;
   background: #f5f5f5;
-  border-color: #dfdfdf;
-  overflow: auto;
+  border: 1px solid #dfdfdf;
+  padding: 12px 12px 0 12px;
+
+  // Chosen height adjustment.
+  .give-donation-forms-filter .chosen-single {
+	height: 28px;
+	line-height: 28px;
+  }
+
+  // Chosen up arrow.
+  .chosen-container-single .chosen-single div b {
+	background-position: 0 4px;
+  }
+
+  // Chosen down arrow.
+  .chosen-container-active.chosen-with-drop .chosen-single div b {
+	background-position: -18px 6px;
+  }
+
+
+  // Prevent select from causing line break flash.
+  #give-payment-form-filter, #give_donation_forms_filter {
+	display: inline-block;
+	width: 300px;
+	@media screen and (max-width: 782px) {
+	  width: 100%;
+	}
+  }
+  // Chosen / Select donation form filter dropdown.
+  #give_donation_forms_filter {
+	width: 255px;
+	@media screen and (max-width: 782px) {
+	  width: 100%;
+	  max-width:100%;
+	}
+  }
+
+  &:after {
+	content: "";
+	display: table;
+	clear: both;
+  }
+}
+
+// Individual filter field.
+.give-filter {
+  display: block;
+  margin-bottom: 12px;
+  width: 100%;
+
+  &:after {
+	content: "";
+	display: table;
+	clear: both;
+  }
+
+  label {
+	display: block;
+	margin-right: 4px;
+  }
+
+  input {
+	margin: 0;
+  }
+
+  input[type="text"] {
+	height: 28px;
+	width: 100%;
+  }
+
+  input[type="text"],
+  input[type="search"] {
+	height: 28px;
+  }
+
+  .button {
+	height: 28px;
+	line-height: 26px;
+	margin: 0;
+	padding: 0 10px 1px;
+  }
+
+  select {
+	width: 100%;
+  }
+
+  @media screen and (min-width: 783px) {
+	float: left;
+	margin-right: 18px;
+	width: auto;
+
+	label {
+	  display: inline-block;
+	}
+
+	input[type="text"] {
+	  display: inline-block;
+	  width: 144px;
+	}
+  }
+}
+
+.give-filter-search {
+  input[type="search"] {
+	display: block;
+	float: left;
+	width: 68%;
+  }
+
+  input[type="submit"] {
+	display: block;
+	float: right;
+	width: 30%;
+  }
+
+  @media screen and (min-width: 783px) {
+	input[type="search"] {
+	  display: inline-block;
+	  margin-right: 4px;
+	  width: 144px;
+	}
+
+	input[type="submit"] {
+	  display: inline-block;
+	  width: auto;
+	}
+  }
+}
+
+.give-filter-half {
+  @media screen and (min-width: 600px) {
+	float: left;
+	width: 49%;
+
+	&:last-child {
+	  float: right;
+	}
+  }
+
+  @media screen and (min-width: 783px) {
+	width: auto;
+
+	&:last-child {
+	  float: left;
+	}
+
+	input[type="text"] {
+	  width: 96px;
+	}
+  }
+}
+
+.give-clear-filters-button {
+  margin-left: 8px;
+}
+
+.give-submit-wrap {
+  clear: both;
+  background: #f5f5f5;
+  border: 1px solid #dfdfdf;
   margin: 8px 0;
   padding: 12px;
-  border-width: 1px;
-  border-style: solid;
   font-size: 13px;
   line-height: 2.1em;
 }
 
 #give-payment-filters {
-  p {
-	color: #777;
-  }
   ul.subsubsub {
 	margin-bottom: 8px;
   }
-  label {
-	font-style: italic;
-	margin: 0 10px;
+}
 
-	&.give-start-date-label {
-	  margin-left: 5px;
-	}
-
+#give-payments-advanced-filter {
+  ul.subsubsub {
+	margin-bottom: 12px;
   }
-
 }
 
 #give-payments-filter {
-  ul.subsubsub {
-	margin: 0 0 12px;
-  }
   .tablenav.top {
 	float: none;
 	.bulkactions {
@@ -62,6 +213,14 @@
 	margin-top: 1px;
   }
 
+  .column-details {
+	width: 50px;
+  }
+
+  .column-amount {
+	width: 120px;
+  }
+
 }
 
 tr.status-refunded td {
@@ -69,20 +228,8 @@ tr.status-refunded td {
   border-top-color: #ccc;
 }
 
-.wp-list-table.forms th#ID {
-  width: 80px;
-}
-
-.wp-list-table.forms th#details {
-  width: 130px;
-}
-
 .wp-list-table.forms th#date {
   width: 140px;
-}
-
-.wp-list-table.forms th#user {
-  width: 130px;
 }
 
 .give-mobile-link {
@@ -96,16 +243,18 @@ tr.status-refunded td {
   float: left;
 }
 
-/*---------------------
-Status Colors
----------------------------*/
+//------------------------------------
+// Status Colors
+//------------------------------------
 
 .give-donation-status {
   > span {
-	float: left;
+	display: inline-block;
 	width: 12px;
 	height: 12px;
-	margin: 3px 4px 0 0;
+	position: relative;
+	top: 1px;
+	margin: 0;
 	padding: 0;
 	border-radius: 50%;
 	background: #888;
@@ -139,34 +288,55 @@ Status Colors
 	background-color: $status-revoked;
   }
 
-  &.status-subscription > span, &.status-give_subscription > span {
+  &.status-subscription > span, &.status-renewal > span, &.status-give_subscription > span {
 	background-color: $status-subscription;
   }
 
 }
 
+//Test Payment Label
+#test-payment-label {
+  @include give-label();
+  background-color: $orange;
+  margin: 0 15px;
+  vertical-align: middle;
+}
+
 //ID & link field
 #give-payments-filter {
+
   .give-payment-id {
 	@include give-label();
-	@include give-label-gray();
+	font-weight: normal;
+	@extend .give-item-label-gray;
   }
 
-  .give-payment-details-link {
-	font-weight: bold;
+  .column-details {
+	padding-right: 30px;
+  }
+
+  .give-donation-status {
+	display: inline-block;
   }
 
 }
 
-/* Payment View Metabox */
-
+//Payment View Metabox
 #give-order-update {
   .give-donation-status {
 	display: inline-block;
 	float: none;
-	margin: 0 0 0 10px;
+	margin: 0 10px;
 	position: relative;
 	top: 3px;
+  }
+}
+
+//Donation Column
+.column-donation_form {
+  .donation-level-text-wrap {
+	font-style: italic;
+	display: block;
   }
 }
 
@@ -192,31 +362,17 @@ Responsiveness
 
 .give-admin-box-inside {
   margin: 0;
-  padding: 3px 12px;
+  padding: 3px 10px;
   clear: both;
   border-bottom: 1px solid #eee;
-}
-
-.rtl .give-admin-box-inside {
-  padding: 5px 10px 5px 0;
 }
 
 .give-admin-box-inside .strong {
   font-weight: 600;
 }
 
-.give-payment-fees .fee-label {
-  font-weight: normal;
-  color: #666;
-}
-
 .give-admin-box .right {
   float: right;
-}
-
-.rtl .give-admin-box .right {
-  float: left;
-  margin-left: 10px;
 }
 
 #give-order-update .inside,
@@ -246,8 +402,16 @@ Responsiveness
   margin-right: 10px;
 }
 
+#give-donation-overview th {
+  text-align: left;
+}
+
 #give-donation-overview .give-select-chosen {
-  width: 196px;
+  width: 97%;
+}
+
+#give-edit-order-form .row {
+	margin-top: 10px;
 }
 
 #give-donation-overview ul,
@@ -282,29 +446,30 @@ Responsiveness
   display: inline-block;
   position: relative;
   vertical-align: top;
-  margin-right: 5%;
-}
-
-#give-donation-overview li.actions {
-  text-align: right;
-  min-width: 200px;
-}
-
-#give-donation-overview ul li.remove {
-  text-align: right;
-}
-
-#give-donation-overview .row {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
 }
 
 #give-donation-overview ul {
   font-size: 0;
-}
 
-#give-donation-overview ul li {
-  font-size: 13px;
+  li {
+	font-size: 13px;
+
+	&.actions {
+	  text-align: right;
+	  min-width: 200px;
+	}
+
+	&.remove {
+	  text-align: right;
+	}
+
+  }
+
+  .row {
+	padding: 12px;
+	border-bottom: 1px solid #eee;
+  }
+
 }
 
 #give-order-data .data span {
@@ -312,22 +477,78 @@ Responsiveness
   font-weight: 600;
 }
 
-#give-donation-overview .inside {
-  padding: 12px;
-}
-
-.give-price-field {
+input.give-price-field {
   width: 80px;
-}
-
-.give_repeatable_upload_wrapper .pricing select, .give_repeatable_product_wrapper .give-select,
-#give_products .give-select {
-  min-width: 100%;
-  max-width: 200px;
+  padding: 3px 5px;
 }
 
 .give_forms_page_give-payment-history.js .postbox .hndle {
   cursor: default;
+}
+
+//------------------------------------------
+//Payment Notes Section
+//------------------------------------------
+
+#give-payment-notes {
+  textarea {
+	min-height: 150px;
+  }
+  #give-add-payment-note {
+	margin: 6px 0 15px;
+  }
+
+}
+
+//------------------------------------------
+//Edit Order Form
+//------------------------------------------
+#give-billing-details {
+	.column > div {
+		margin: 0 0 10px;
+	}
+
+	label {
+		display: block;
+		margin-bottom: 5px;
+	}
+
+	.column-container {
+		padding: 5px 0 10px;
+	}
+
+	input[type="text"] {
+		width: 98%;
+	}
+
+	.chosen-container {
+		width: 98% !important;
+	}
+}
+
+//------------------------------------------
+//Responsive
+//------------------------------------------
+@media screen and (min-width: 1200px) {
+	#give-edit-order-form .column {
+		width: 33%;
+	}
+
+	#give-order-address .column {
+		width: 49%;
+	}
+
+	#give-donation-overview.columns-4 li.actions {
+		width: 25%;
+		margin-top: 0;
+		margin-right: 0;
+	}
+}
+
+@media screen and (max-width: 1199px) {
+  #give-edit-order-form .column {
+	width: 49%;
+  }
 }
 
 @media screen and (max-width: 782px) {
@@ -336,69 +557,41 @@ Responsiveness
   }
 }
 
-@media screen and (max-width: 1024px) {
-  #give-edit-order-form .column {
-	width: 49%;
+//------------------------------------------
+//Donation Details
+//------------------------------------------
+#give-donor-details .inside, #give-donation-overview .inside {
+  margin-top: 0;
+}
+
+.give_forms_page_give-payment-history #give-dashboard-widgets-wrap #side-sortables {
+  padding-top: 0;
+}
+
+//------------------------------------------
+// Ajax chosen select field
+//------------------------------------------
+.give-select-chosen {
+  .spinner {
+	position: absolute;
+	right: 5px;
+	top: 2px;
+	z-index: 999;
   }
 }
 
-@media screen and (max-width: 1280px) and (min-width: 1279px) {
+.give-select-chosen-ajax {
+  // Show spinner.
+  .spinner {
+	visibility: visible;
+  }
 
-  #give-edit-order-form .column {
-	width: 32%;
+  // Hide search icon.
+  .chosen-search input[type="text"] {
+	background-image: none !important;
   }
 }
 
-@media screen and (min-width: 1280px) {
-  #give-edit-order-form .column {
-	width: 32%;
-	margin-right: 3%;
-  }
-
-  #give-edit-order-form .columns-4 .column, #give-donation-overview.columns-4 .row > ul > li,
-  #give-donation-overview.columns-4 .inside > ul > li {
-	width: 22%;
-	margin-right: 2%;
-  }
-
-  #give-edit-order-form .columns-3 .column:nth-child(2n+1),
-  #give-edit-order-form .columns-4 .column:nth-child(3n+1),
-  #give-edit-order-form .column:nth-child(2n+1) {
-	margin-right: 0;
-  }
-
-  #give-donation-overview.columns-4 li.download {
-	width: 33%;
-  }
-
-  #give-donation-overview.columns-4 li.price,
-  #give-donation-overview.columns-3 .row > ul > li.price,
-  #give-donation-overview.columns-3 .inside > ul > li.price {
-	width: 14%;
-  }
-
-  #give-donation-overview.columns-4 li.actions {
-	width: 25%;
-	margin-top: 0;
-	margin-right: 0;
-  }
-}
-
-@media screen and (max-width: 1284px) {
-  #give-edit-order-form .column strong {
-	display: block;
-  }
-}
-
-/*------------------------------------------
-Donation Details
---------------------------------------------*/
-
-#give-customer-details {
-
-  .inside {
-	padding-top: 15px;
-	padding-bottom: 15px;
-  }
-
+.give-select-chosen-ajax.chosen-container-single .chosen-search input[type="text"] {
+  background-image: none !important;
 }

@@ -4,36 +4,39 @@
  *
  * @package     Give
  * @subpackage  Classes/Stats
- * @copyright   Copyright (c) 2015, WordImpress
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Give_Stats Class
  *
- * This class is for retrieving stats for earnings and sales
+ * This class is for retrieving stats for earnings and sales.
  *
- * Stats can be retrieved for date ranges and pre-defined periods
+ * Stats can be retrieved for date ranges and pre-defined periods.
  *
  * @since 1.0
  */
 class Give_Payment_Stats extends Give_Stats {
 
-
 	/**
 	 * Retrieve sale stats
 	 *
-	 * @access public
 	 * @since  1.0
+	 * @access public
 	 *
-	 * @param $form_id    INT The download product to retrieve stats for. If false, gets stats for all forms
-	 * @param $start_date string|bool The starting date for which we'd like to filter our sale stats. If false, we'll use the default start date of `this_month`
-	 * @param $end_date   string|bool The end date for which we'd like to filter our sale stats. If false, we'll use the default end date of `this_month`
-	 * @param $status     string|array The sale status(es) to count. Only valid when retrieving global stats
+	 * @param  $form_id    int          The donation form to retrieve stats for. If false, gets stats for all forms
+	 * @param  $start_date string|bool  The starting date for which we'd like to filter our sale stats. If false, we'll use the default start date of `this_month`
+	 * @param  $end_date   string|bool  The end date for which we'd like to filter our sale stats. If false, we'll use the default end date of `this_month`
+	 * @param  $status     string|array The sale status(es) to count. Only valid when retrieving global stats
 	 *
-	 * @return float|int
+	 * @return float|int                Total amount of donations based on the passed arguments.
 	 */
 	public function get_sales( $form_id = 0, $start_date = false, $end_date = false, $status = 'publish' ) {
 
@@ -49,55 +52,138 @@ class Give_Payment_Stats extends Give_Stats {
 			return $this->end_date;
 		}
 
-		if ( empty( $form_id ) ) {
+		$args = array(
+			'status'     => 'publish',
+			'start_date' => $this->start_date,
+			'end_date'   => $this->end_date,
+			'fields'     => 'ids',
+			'number'     => - 1,
+		);
 
-			// Global sale stats
-			add_filter( 'give_count_payments_where', array( $this, 'count_where' ) );
-
-			if ( is_array( $status ) ) {
-				$count = 0;
-				foreach ( $status as $payment_status ) {
-					$count += give_count_payments()->$payment_status;
-				}
-			} else {
-				$count = give_count_payments()->$status;
-			}
-
-			remove_filter( 'give_count_payments_where', array( $this, 'count_where' ) );
-
-		} else {
-
-			// Product specific stats
-			global $give_logs;
-
-			add_filter( 'posts_where', array( $this, 'payments_where' ) );
-
-			$count = $give_logs->get_log_count( $form_id, 'sale' );
-
-			remove_filter( 'posts_where', array( $this, 'payments_where' ) );
-
+		if ( ! empty( $form_id ) ) {
+			$args['give_forms'] = $form_id;
 		}
 
-		return $count;
+		/* @var Give_Payments_Query $payments */
+		$payments = new Give_Payments_Query( $args );
+		$payments = $payments->get_payments();
 
+		return count( $payments );
 	}
 
 
 	/**
 	 * Retrieve earning stats
 	 *
-	 * @access public
 	 * @since  1.0
+	 * @access public
 	 *
-	 * @param $form_id    INT The download product to retrieve stats for. If false, gets stats for all forms
-	 * @param $start_date string|bool The starting date for which we'd like to filter our sale stats. If false, we'll use the default start date of `this_month`
-	 * @param $end_date   string|bool The end date for which we'd like to filter our sale stats. If false, we'll use the default end date of `this_month`
+	 * @param  $form_id     int         The donation form to retrieve stats for. If false, gets stats for all forms.
+	 * @param  $start_date  string|bool The starting date for which we'd like to filter our donation earnings stats. If false, method will use the default start date of `this_month`.
+	 * @param  $end_date    string|bool The end date for which we'd like to filter the donations stats. If false, method will use the default end date of `this_month`.
+	 * @param  $gateway_id  string|bool The gateway to get earnings for such as 'paypal' or 'stripe'.
 	 *
-	 * @return float|int
+	 * @return float|int                Total amount of donations based on the passed arguments.
 	 */
-	public function get_earnings( $form_id = 0, $start_date = false, $end_date = false ) {
+	public function get_earnings( $form_id = 0, $start_date = false, $end_date = false, $gateway_id = false ) {
+		$this->setup_dates( $start_date, $end_date );
 
-		global $wpdb;
+		// Make sure start date is valid
+		if ( is_wp_error( $this->start_date ) ) {
+			return $this->start_date;
+		}
+
+		// Make sure end date is valid
+		if ( is_wp_error( $this->end_date ) ) {
+			return $this->end_date;
+		}
+
+		$args = array(
+			'status'     => 'publish',
+			'give_forms' => $form_id,
+			'start_date' => $this->start_date,
+			'end_date'   => $this->end_date,
+			'fields'     => 'ids',
+			'number'     => - 1,
+		);
+
+
+		// Filter by Gateway ID meta_key
+		if ( $gateway_id ) {
+			$args['meta_query'][] = array(
+				'key'   => '_give_payment_gateway',
+				'value' => $gateway_id,
+			);
+		}
+
+		// Filter by Gateway ID meta_key
+		if ( $form_id ) {
+			$args['meta_query'][] = array(
+				'key'   => '_give_payment_form_id',
+				'value' => $form_id,
+			);
+		}
+
+		if ( ! empty( $args['meta_query'] ) && 1 < count( $args['meta_query'] ) ) {
+			$args['meta_query']['relation'] = 'AND';
+		}
+
+		$args = apply_filters( 'give_stats_earnings_args', $args );
+		$key  = Give_Cache::get_key( 'give_stats', $args );
+
+		// Set transient for faster stats.
+		$earnings = Give_Cache::get( $key );
+
+		if ( false === $earnings ) {
+
+			$this->timestamp = false;
+			$payments        = new Give_Payments_Query( $args );
+			$payments        = $payments->get_payments();
+			$earnings        = 0;
+
+			if ( ! empty( $payments ) ) {
+				foreach ( $payments as $payment ) {
+					$earnings += (float) give_donation_amount( $payment->ID, array( 'type' => 'stats' ) );
+				}
+
+			}
+
+			// Cache the results for one hour.
+			Give_Cache::set( $key, give_sanitize_amount_for_db( $earnings ), 60 * 60 );
+		}
+
+		/**
+		 * Filter the earnings.
+		 *
+		 * @since 1.8.17
+		 *
+		 * @param  float       $earnings   Earning amount.
+		 * @param  int         $form_id    Donation Form ID.
+		 * @param  string|bool $start_date Earning start date.
+		 * @param  string|bool $end_date   Earning end date.
+		 * @param  string|bool $gateway_id Payment gateway id.
+		 */
+		$earnings = apply_filters( 'give_get_earnings', $earnings, $form_id, $start_date, $end_date, $gateway_id );
+
+		//return earnings
+		return round( $earnings, give_get_price_decimals( $form_id ) );
+
+	}
+
+	/**
+	 * Retrieve earning stat transient key
+	 *
+	 * @since  1.0
+	 * @access public
+	 *
+	 * @param  $form_id     int         The donation form to retrieve stats for. If false, gets stats for all forms
+	 * @param  $start_date  string|bool The starting date for which we'd like to filter our donation earnings stats. If false, we'll use the default start date of `this_month`
+	 * @param  $end_date    string|bool The end date for which we'd like to filter our sale stats. If false, we'll use the default end date of `this_month`
+	 * @param  $gateway_id  string|bool The gateway to get earnings for such as 'paypal' or 'stripe'
+	 *
+	 * @return float|int                Total amount of donations based on the passed arguments.
+	 */
+	public function get_earnings_cache_key( $form_id = 0, $start_date = false, $end_date = false, $gateway_id = false ) {
 
 		$this->setup_dates( $start_date, $end_date );
 
@@ -111,104 +197,63 @@ class Give_Payment_Stats extends Give_Stats {
 			return $this->end_date;
 		}
 
-		$earnings = 0;
+		$args = array(
+			'status'     => 'publish',
+			'give_forms' => $form_id,
+			'start_date' => $this->start_date,
+			'end_date'   => $this->end_date,
+			'fields'     => 'ids',
+			'number'     => - 1,
+		);
 
-		add_filter( 'posts_where', array( $this, 'payments_where' ) );
 
-		if ( empty( $form_id ) ) {
-
-			// Global earning stats
-			$args = array(
-				'post_type'              => 'give_payment',
-				'nopaging'               => true,
-				'post_status'            => array( 'publish', 'revoked' ),
-				'fields'                 => 'ids',
-				'update_post_term_cache' => false,
-				'suppress_filters'       => false,
-				'start_date'             => $this->start_date,
-				// These dates are not valid query args, but they are used for cache keys
-				'end_date'               => $this->end_date,
-				'give_transient_type'    => 'give_earnings',
-				// This is not a valid query arg, but is used for cache keying
+		// Filter by Gateway ID meta_key
+		if ( $gateway_id ) {
+			$args['meta_query'][] = array(
+				'key'   => '_give_payment_gateway',
+				'value' => $gateway_id,
 			);
-
-			$args = apply_filters( 'give_stats_earnings_args', $args );
-			$key  = md5( serialize( $args ) );
-
-			$earnings = get_transient( $key );
-			$earnings = false; //TEMPORARY
-			if ( false === $earnings ) {
-				$sales    = get_posts( $args );
-				$earnings = 0;
-				if ( $sales ) {
-					$sales = implode( ',', $sales );
-					$earnings += $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_give_payment_total' AND post_id IN({$sales})" );
-				}
-				// Cache the results for one hour
-				set_transient( $key, $earnings, 60 * 60 );
-			}
-
-		} else {
-
-			// Download specific earning stats
-			global $give_logs, $wpdb;
-
-			$args = array(
-				'post_parent'         => $form_id,
-				'nopaging'            => true,
-				'log_type'            => 'sale',
-				'fields'              => 'ids',
-				'suppress_filters'    => false,
-				'start_date'          => $this->start_date,
-				// These dates are not valid query args, but they are used for cache keys
-				'end_date'            => $this->end_date,
-				'give_transient_type' => 'give_earnings',
-				// This is not a valid query arg, but is used for cache keying
-			);
-
-			$args = apply_filters( 'give_stats_earnings_args', $args );
-			$key  = md5( serialize( $args ) );
-
-			$earnings = get_transient( $key );
-			if ( false === $earnings ) {
-
-				$log_ids  = $give_logs->get_connected_logs( $args, 'sale' );
-				$earnings = 0;
-
-				if ( $log_ids ) {
-					$log_ids     = implode( ',', $log_ids );
-					$payment_ids = $wpdb->get_col( "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key='_give_log_payment_id' AND post_id IN ($log_ids);" );
-
-				}
-
-				// Cache the results for one hour
-				set_transient( $key, $earnings, 60 * 60 );
-			}
 		}
 
-		remove_filter( 'posts_where', array( $this, 'payments_where' ) );
+		// Filter by Gateway ID meta_key
+		if ( $form_id ) {
+			$args['meta_query'][] = array(
+				'key'   => '_give_payment_form_id',
+				'value' => $form_id,
+			);
+		}
 
-		return round( $earnings, give_currency_decimal_filter() );
+		if ( ! empty( $args['meta_query'] ) && 1 < count( $args['meta_query'] ) ) {
+			$args['meta_query']['relation'] = 'AND';
+		}
+
+		$args = apply_filters( 'give_stats_earnings_args', $args );
+		$key  = Give_Cache::get_key( 'give_stats', $args );
+
+		//return earnings
+		return $key;
 
 	}
 
 	/**
-	 * Get the best selling Forms
+	 * Get the best selling forms
 	 *
-	 * @access public
 	 * @since  1.0
+	 * @access public
+	 * @global wpdb $wpdb
 	 *
-	 * @param $number int The number of results to retrieve with the default set to 10.
+	 * @param       $number int The number of results to retrieve with the default set to 10.
 	 *
-	 * @return array
+	 * @return array       Best selling forms
 	 */
 	public function get_best_selling( $number = 10 ) {
-
 		global $wpdb;
 
+		$meta_table = __give_v20_bc_table_details( 'form' );
+
 		$give_forms = $wpdb->get_results( $wpdb->prepare(
-			"SELECT post_id as form_id, max(meta_value) as sales
-				FROM $wpdb->postmeta WHERE meta_key='_give_form_sales' AND meta_value > 0
+			"SELECT {$meta_table['column']['id']} as form_id, max(meta_value) as sales
+				FROM {$meta_table['name']} WHERE meta_key='_give_form_sales' AND meta_value > 0
 				GROUP BY meta_value+0
 				DESC LIMIT %d;", $number
 		) );

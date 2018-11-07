@@ -4,85 +4,109 @@
  *
  * @package     Give
  * @subpackage  Payments
- * @copyright   Copyright (c) 2015, WordImpress
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Complete a purchase
+ * Complete a donation
  *
- * Performs all necessary actions to complete a purchase.
+ * Performs all necessary actions to complete a donation.
  * Triggered by the give_update_payment_status() function.
  *
- * @since 1.0
+ * @since  1.0
  *
- * @param int    $payment_id the ID number of the payment
- * @param string $new_status the status of the payment, probably "publish"
- * @param string $old_status the status of the payment prior to being marked as "complete", probably "pending"
+ * @param  int    $payment_id The ID number of the payment.
+ * @param  string $new_status The status of the payment, probably "publish".
+ * @param  string $old_status The status of the payment prior to being marked as "complete", probably "pending".
  *
  * @return void
  */
 function give_complete_purchase( $payment_id, $new_status, $old_status ) {
+
+	// Make sure that payments are only completed once.
 	if ( $old_status == 'publish' || $old_status == 'complete' ) {
 		return;
-	} // Make sure that payments are only completed once
+	}
 
-	// Make sure the payment completion is only processed when new status is complete
+	// Make sure the payment completion is only processed when new status is complete.
 	if ( $new_status != 'publish' && $new_status != 'complete' ) {
 		return;
 	}
 
-	$payment_meta   = give_get_payment_meta( $payment_id );
+	$payment = new Give_Payment( $payment_id );
+
 	$creation_date  = get_post_field( 'post_date', $payment_id, 'raw' );
-	$completed_date = give_get_payment_completed_date( $payment_id );
-	$user_info      = give_get_payment_meta_user_info( $payment_id );
-	$donor_id    = give_get_payment_customer_id( $payment_id );
-	$amount         = give_get_payment_amount( $payment_id );
+	$payment_meta   = $payment->payment_meta;
+	$completed_date = $payment->completed_date;
+	$user_info      = $payment->user_info;
+	$donor_id       = $payment->customer_id;
+	$amount         = $payment->total;
+	$price_id       = $payment->price_id;
+	$form_id        = $payment->form_id;
 
-	do_action( 'give_pre_complete_purchase', $payment_id );
+	/**
+	 * Fires before completing donation.
+	 *
+	 * @since 1.0
+	 *
+	 * @param int $payment_id The ID of the payment.
+	 */
+	do_action( 'give_pre_complete_donation', $payment_id );
 
-	$price_id = isset( $_POST['give-price-id'] ) ? (int) $_POST['give-price-id'] : false;
-
-	// Ensure these actions only run once, ever
+	// Ensure these actions only run once, ever.
 	if ( empty( $completed_date ) ) {
 
-		if ( ! give_is_test_mode() || apply_filters( 'give_log_test_payment_stats', false ) ) {
+		give_record_donation_in_log( $form_id, $payment_id, $price_id, $creation_date );
 
-			give_record_sale_in_log( $payment_meta['form_id'], $payment_id, $price_id, $creation_date );
-			give_increase_purchase_count( $payment_meta['form_id'] );
-			give_increase_earnings( $payment_meta['form_id'], $amount );
+		/**
+		 * Fires after logging donation record.
+		 *
+		 * @since 1.0
+		 *
+		 * @param int   $form_id      The ID number of the form.
+		 * @param int   $payment_id   The ID number of the payment.
+		 * @param array $payment_meta The payment meta.
+		 */
+		do_action( 'give_complete_form_donation', $form_id, $payment_id, $payment_meta );
 
-		}
-
-		do_action( 'give_complete_form_donation', $payment_meta['form_id'], $payment_id, $payment_meta );
 	}
 
+	// Increase the earnings for this form ID.
+	give_increase_earnings( $form_id, $amount );
+	give_increase_donation_count( $form_id );
 
-	// Clear the total earnings cache
-	delete_transient( 'give_earnings_total' );
-	// Clear the This Month earnings (this_monththis_month is NOT a typo)
-	delete_transient( md5( 'give_earnings_this_monththis_month' ) );
-	delete_transient( md5( 'give_earnings_todaytoday' ) );
+	// @todo: Refresh only range related stat cache
+	give_delete_donation_stats();
 
-
-	// Increase the donor's purchase stats
-	Give()->customers->increment_stats( $donor_id, $amount );
+	// Increase the donor's donation stats.
+	$donor = new Give_Donor( $donor_id );
+	$donor->increase_purchase_count();
+	$donor->increase_value( $amount );
 
 	give_increase_total_earnings( $amount );
 
-	// Ensure this action only runs once ever
+	// Ensure this action only runs once ever.
 	if ( empty( $completed_date ) ) {
 
-		// Save the completed date
-		give_update_payment_meta( $payment_id, '_give_completed_date', current_time( 'mysql' ) );
+		// Save the completed date.
+		$payment->completed_date = current_time( 'mysql' );
+		$payment->save();
 
-		do_action( 'give_complete_purchase', $payment_id );
+		/**
+		 * Fires after a donation successfully complete.
+		 *
+		 * @since 1.0
+		 *
+		 * @param int $payment_id The ID of the payment.
+		 */
+		do_action( 'give_complete_donation', $payment_id );
 	}
 
 }
@@ -93,102 +117,40 @@ add_action( 'give_update_payment_status', 'give_complete_purchase', 100, 3 );
 /**
  * Record payment status change
  *
- * @since 1.0
+ * @since  1.0
  *
- * @param int    $payment_id the ID number of the payment
- * @param string $new_status the status of the payment, probably "publish"
- * @param string $old_status the status of the payment prior to being marked as "complete", probably "pending"
+ * @param  int    $payment_id The ID number of the payment.
+ * @param  string $new_status The status of the payment, probably "publish".
+ * @param  string $old_status The status of the payment prior to being marked as "complete", probably "pending".
  *
  * @return void
  */
 function give_record_status_change( $payment_id, $new_status, $old_status ) {
 
-	// Get the list of statuses so that status in the payment note can be translated
+	// Get the list of statuses so that status in the payment note can be translated.
 	$stati      = give_get_payment_statuses();
 	$old_status = isset( $stati[ $old_status ] ) ? $stati[ $old_status ] : $old_status;
 	$new_status = isset( $stati[ $new_status ] ) ? $stati[ $new_status ] : $new_status;
 
-	$status_change = sprintf( __( 'Status changed from %s to %s', 'give' ), $old_status, $new_status );
+	// translators: 1: old status 2: new status.
+	$status_change = sprintf( esc_html__( 'Status changed from %1$s to %2$s.', 'give' ), $old_status, $new_status );
 
 	give_insert_payment_note( $payment_id, $status_change );
 }
 
 add_action( 'give_update_payment_status', 'give_record_status_change', 100, 3 );
 
-/**
- * Reduces earnings and donation stats when a donation is refunded
- *
- * @since 1.0
- *
- * @param $payment_id
- * @param $new_status
- * @param $old_status
- *
- * @return void
- */
-function give_undo_donation_on_refund( $payment_id, $new_status, $old_status ) {
-
-	if ( 'publish' != $old_status && 'revoked' != $old_status ) {
-		return;
-	}
-
-	if ( 'refunded' != $new_status ) {
-		return;
-	}
-
-	// Set necessary vars
-	$payment_meta = give_get_payment_meta( $payment_id );
-	$amount = give_get_payment_amount( $payment_id );
-
-	// Undo this purchase
-	give_undo_purchase( $payment_meta['form_id'], $payment_id );
-
-	// Decrease total earnings
-	give_decrease_total_earnings( $amount );
-
-	// Decrement the stats for the donor
-	$donor_id = give_get_payment_customer_id( $payment_id );
-
-	if ( $donor_id ) {
-
-		Give()->customers->decrement_stats( $donor_id, $amount );
-
-	}
-
-	// Clear the This Month earnings (this_monththis_month is NOT a typo)
-	delete_transient( md5( 'give_earnings_this_monththis_month' ) );
-}
-
-add_action( 'give_update_payment_status', 'give_undo_donation_on_refund', 100, 3 );
-
 
 /**
- * Flushes the current user's purchase history transient when a payment status
- * is updated
+ * Update Old Payments Totals
  *
- * @since 1.0
+ * Updates all old payments, prior to 1.2, with new meta for the total donation amount.
  *
- * @param $payment_id
- * @param $new_status the status of the payment, probably "publish"
- * @param $old_status the status of the payment prior to being marked as "complete", probably "pending"
- */
-function give_clear_user_history_cache( $payment_id, $new_status, $old_status ) {
-	$user_info = give_get_payment_meta_user_info( $payment_id );
-
-	delete_transient( 'give_user_' . $user_info['id'] . '_purchases' );
-}
-
-add_action( 'give_update_payment_status', 'give_clear_user_history_cache', 10, 3 );
-
-/**
- * Updates all old payments, prior to 1.2, with new
- * meta for the total purchase amount
+ * It's done to query payments by their totals.
  *
- * This is so that payments can be queried by their totals
+ * @since  1.0
  *
- * @since 1.0
- *
- * @param array $data Arguments passed
+ * @param  array $data Arguments passed.
  *
  * @return void
  */
@@ -204,13 +166,18 @@ function give_update_old_payments_with_totals( $data ) {
 	$payments = give_get_payments( array(
 		'offset' => 0,
 		'number' => - 1,
-		'mode'   => 'all'
+		'mode'   => 'all',
 	) );
 
 	if ( $payments ) {
 		foreach ( $payments as $payment ) {
-			$meta = give_get_payment_meta( $payment->ID );
-			give_update_payment_meta( $payment->ID, '_give_payment_total', $meta['amount'] );
+
+			$payment = new Give_Payment( $payment->ID );
+			$meta    = $payment->get_meta();
+
+			$payment->total = $meta['amount'];
+			$payment->save();
+
 		}
 	}
 
@@ -220,16 +187,19 @@ function give_update_old_payments_with_totals( $data ) {
 add_action( 'give_upgrade_payments', 'give_update_old_payments_with_totals' );
 
 /**
- * Updates week-old+ 'pending' orders to 'abandoned'
+ * Mark Abandoned Donations
  *
- * @since 1.0
+ * Updates over a week-old 'pending' donations to 'abandoned' status.
+ *
+ * @since  1.0
+ *
  * @return void
  */
-function give_mark_abandoned_orders() {
+function give_mark_abandoned_donations() {
 	$args = array(
 		'status' => 'pending',
 		'number' => - 1,
-		'fields' => 'ids'
+		'output' => 'give_payments',
 	);
 
 	add_filter( 'posts_where', 'give_filter_where_older_than_week' );
@@ -239,10 +209,245 @@ function give_mark_abandoned_orders() {
 	remove_filter( 'posts_where', 'give_filter_where_older_than_week' );
 
 	if ( $payments ) {
+		/**
+		 * Filter payment gateways:  Used to set payment gateways which can be skip while transferring pending payment to abandon.
+		 *
+		 * @since 1.6
+		 *
+		 * @param array $skip_payment_gateways Array of payment gateways
+		 */
+		$skip_payment_gateways = apply_filters( 'give_mark_abandoned_donation_gateways', array( 'offline' ) );
+
+		/* @var Give_Payment $payment */
 		foreach ( $payments as $payment ) {
-			give_update_payment_status( $payment, 'abandoned' );
+			$gateway = give_get_payment_gateway( $payment->ID );
+
+			// Skip payment gateways.
+			if ( in_array( $gateway, $skip_payment_gateways ) ) {
+				continue;
+			}
+
+			$payment->status = 'abandoned';
+			$payment->save();
 		}
 	}
 }
 
-add_action( 'give_weekly_scheduled_events', 'give_mark_abandoned_orders' );
+Give_Cron::add_weekly_event( 'give_mark_abandoned_donations' );
+
+
+/**
+ * Trigger the refresh of this month reports transients
+ *
+ * @since 1.7
+ *
+ * @param int $payment_ID Payment ID.
+ *
+ * @return void
+ */
+function give_refresh_thismonth_stat_transients( $payment_ID ) {
+	// Monthly stats.
+	Give_Cache::delete( Give_Cache::get_key( 'give_estimated_monthly_stats' ) );
+
+	// @todo: Refresh only range related stat cache
+	give_delete_donation_stats();
+}
+
+add_action( 'save_post_give_payment', 'give_refresh_thismonth_stat_transients' );
+
+
+/**
+ * Add support to get all payment meta.
+ * Note: only use for internal purpose
+ *
+ * @since 2.0
+ *
+ * @param $check
+ * @param $object_id
+ * @param $meta_key
+ * @param $single
+ *
+ * @return array
+ */
+function give_bc_v20_get_payment_meta( $check, $object_id, $meta_key, $single ) {
+	// Bailout.
+	if (
+		'give_payment' !== get_post_type( $object_id ) ||
+		'_give_payment_meta' !== $meta_key ||
+		! give_has_upgrade_completed( 'v20_upgrades_payment_metadata' )
+	) {
+		return $check;
+	}
+
+	$cache_key = "_give_payment_meta_{$object_id}";
+
+	// Get already calculate payment meta from cache.
+	$payment_meta = Give_Cache::get_db_query( $cache_key );
+
+	if ( is_null( $payment_meta ) ) {
+		// Remove filter.
+		remove_filter( 'get_post_metadata', 'give_bc_v20_get_payment_meta', 999 );
+
+		$donation = new Give_Payment( $object_id );
+
+		// Get all payment meta.
+		$payment_meta = give_get_meta( $object_id );
+
+		// Set default value to array.
+		if ( empty( $payment_meta ) ) {
+			return $check;
+		}
+
+		// Convert all meta key value to string instead of array
+		array_walk( $payment_meta, function ( &$meta, $key ) {
+			$meta = current( $meta );
+		} );
+
+		/**
+		 * Add backward compatibility to old meta keys.
+		 */
+		// Donation key.
+		$payment_meta['key'] = ! empty( $payment_meta['_give_payment_purchase_key'] ) ? $payment_meta['_give_payment_purchase_key'] : '';
+
+		// Donation form.
+		$payment_meta['form_title'] = ! empty( $payment_meta['_give_payment_form_title'] ) ? $payment_meta['_give_payment_form_title'] : '';
+
+		// Donor email.
+		$payment_meta['email'] = ! empty( $payment_meta['_give_payment_donor_email'] ) ? $payment_meta['_give_payment_donor_email'] : '';
+		$payment_meta['email'] = ! empty( $payment_meta['email'] ) ?
+			$payment_meta['email'] :
+			Give()->donors->get_column( 'email', $donation->donor_id );
+
+		// Form id.
+		$payment_meta['form_id'] = ! empty( $payment_meta['_give_payment_form_id'] ) ? $payment_meta['_give_payment_form_id'] : '';
+
+		// Price id.
+		$payment_meta['price_id'] = ! empty( $payment_meta['_give_payment_price_id'] ) ? $payment_meta['_give_payment_price_id'] : '';
+
+		// Date.
+		$payment_meta['date'] = ! empty( $payment_meta['_give_payment_date'] ) ? $payment_meta['_give_payment_date'] : '';
+		$payment_meta['date'] = ! empty( $payment_meta['date'] ) ?
+			$payment_meta['date'] :
+			get_post_field( 'post_date', $object_id );
+
+
+		// Currency.
+		$payment_meta['currency'] = ! empty( $payment_meta['_give_payment_currency'] ) ? $payment_meta['_give_payment_currency'] : '';
+
+		// Decode donor data.
+		$donor_id = ! empty( $payment_meta['_give_payment_donor_id'] ) ? $payment_meta['_give_payment_donor_id'] : 0;
+		$donor    = new Give_Donor( $donor_id );
+
+		// Donor first name.
+		$donor_data['first_name'] = ! empty( $payment_meta['_give_donor_billing_first_name'] ) ? $payment_meta['_give_donor_billing_first_name'] : '';
+		$donor_data['first_name'] = ! empty( $donor_data['first_name'] ) ?
+			$donor_data['first_name'] :
+			$donor->get_first_name();
+
+		// Donor last name.
+		$donor_data['last_name'] = ! empty( $payment_meta['_give_donor_billing_last_name'] ) ? $payment_meta['_give_donor_billing_last_name'] : '';
+		$donor_data['last_name'] = ! empty( $donor_data['last_name'] ) ?
+			$donor_data['last_name'] :
+			$donor->get_last_name();
+
+		// Donor email.
+		$donor_data['email'] = $payment_meta['email'];
+
+		// User ID.
+		$donor_data['id'] = $donation->user_id;
+
+		$donor_data['address'] = false;
+
+		// Address1.
+		$address1 = ! empty( $payment_meta['_give_donor_billing_address1'] ) ? $payment_meta['_give_donor_billing_address1'] : '';
+		if ( $address1 ) {
+			$donor_data['address']['line1'] = $address1;
+		}
+
+		// Address2.
+		$address2 = ! empty( $payment_meta['_give_donor_billing_address2'] ) ? $payment_meta['_give_donor_billing_address2'] : '';
+		if ( $address2 ) {
+			$donor_data['address']['line2'] = $address2;
+		}
+
+		// City.
+		$city = ! empty( $payment_meta['_give_donor_billing_city'] ) ? $payment_meta['_give_donor_billing_city'] : '';
+		if ( $city ) {
+			$donor_data['address']['city'] = $city;
+		}
+
+		// Zip.
+		$zip = ! empty( $payment_meta['_give_donor_billing_zip'] ) ? $payment_meta['_give_donor_billing_zip'] : '';
+		if ( $zip ) {
+			$donor_data['address']['zip'] = $zip;
+		}
+
+		// State.
+		$state = ! empty( $payment_meta['_give_donor_billing_state'] ) ? $payment_meta['_give_donor_billing_state'] : '';
+		if ( $state ) {
+			$donor_data['address']['state'] = $state;
+		}
+
+		// Country.
+		$country = ! empty( $payment_meta['_give_donor_billing_country'] ) ? $payment_meta['_give_donor_billing_country'] : '';
+		if ( $country ) {
+			$donor_data['address']['country'] = $country;
+		}
+
+		$payment_meta['user_info'] = $donor_data;
+
+		// Add filter
+		add_filter( 'get_post_metadata', 'give_bc_v20_get_payment_meta', 999, 4 );
+
+		// Set custom meta key into payment meta.
+		if ( ! empty( $payment_meta['_give_payment_meta'] ) ) {
+			$payment_meta = array_merge( maybe_unserialize( $payment_meta['_give_payment_meta'] ), $payment_meta );
+		}
+
+		// Set cache.
+		Give_Cache::set_db_query( $cache_key, $payment_meta );
+	}
+
+	if ( $single ) {
+		/**
+		 * Filter the payment meta
+		 * Add custom meta key to payment meta
+		 *
+		 * @since 2.0
+		 */
+		$new_payment_meta[0] = apply_filters( 'give_get_payment_meta', $payment_meta, $object_id, $meta_key );
+
+		$payment_meta = $new_payment_meta;
+	}
+
+	return $payment_meta;
+}
+
+add_filter( 'get_post_metadata', 'give_bc_v20_get_payment_meta', 999, 4 );
+
+/**
+ * Add meta in payment that store page id and page url.
+ *
+ * Will add/update when user add click on the checkout page.
+ * The status of the donation doest not matter as it get change when user had made the payment successfully.
+ *
+ * @since 1.8.13
+ *
+ * @param int $payment_id Payment id for which the meta value should be updated.
+ */
+function give_payment_save_page_data( $payment_id ) {
+	$page_url = ( ! empty( $_REQUEST['give-current-url'] ) ? esc_url( $_REQUEST['give-current-url'] ) : false );
+
+	// Check $page_url is not empty.
+	if ( $page_url ) {
+		update_post_meta( $payment_id, '_give_current_url', $page_url );
+		$page_id = url_to_postid( $page_url );
+		// Check $page_id is not empty.
+		if ( $page_id ) {
+			update_post_meta( $payment_id, '_give_current_page_id', $page_id );
+		}
+	}
+}
+
+// Fire when payment is save.
+add_action( 'give_insert_payment', 'give_payment_save_page_data' );

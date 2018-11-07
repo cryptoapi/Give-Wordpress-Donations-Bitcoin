@@ -1,0 +1,77 @@
+//---------------------------------------------------------
+//Progress Bar Styles
+//---------------------------------------------------------
+.give-progress {
+	height: 15px;
+	width: 95%;
+	border-radius: 4px;
+	overflow: hidden;
+	background-color: whitesmoke;
+
+	> div {
+		height: 100%;
+		width: 0;
+	}
+
+}
+
+.admin-color-fresh .give-progress div, .give-progress div {
+	background: #0073aa;
+}
+
+.admin-color-light .give-progress div {
+	background: #888;
+}
+
+.admin-color-blue .give-progress div {
+	background: #096484;
+}
+
+.admin-color-coffee .give-progress div {
+	background: #c7a589;
+}
+
+.admin-color-ectoplasm .give-progress div {
+	background: #a3b745;
+}
+
+.admin-color-midnight .give-progress div {
+	background: #e14d43;
+}
+
+.admin-color-sunrise .give-progress div {
+	background: #dd823b;
+}
+
+
+/**
+ * Spinner
+ */
+.give-spinner-wrapper{
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	top: 0;
+	background: rgba(245, 245, 245, 0.57);
+	z-index: 1;
+	display: none;
+
+	&.is-active{
+		display: inline-block;
+	}
+
+	.aligncenter{
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin: 10px 10px 0 0;
+	}
+}
+
+.give-spinner {
+	&.spinner.is-active{
+		margin: 0 0 0 2px;
+		float: none;
+	}
+}

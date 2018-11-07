@@ -4,15 +4,22 @@
  * @description: The Main SCSS file for FRONTEND styles which is compiled and minified via Gulp taskrunner
  * @package:     Give
  * @subpackage:  SCSS/Frontend
- * @copyright:   Copyright (c) 2015, WordImpress
+ * @copyright:   Copyright (c) 2016, WordImpress
  * @license:     http://opensource.org/licenses/gpl-2.0.php GNU Public License
 */
 @import '_variables';
 @import '_mixins';
 @import 'fonts';
-@import 'jquery-qtip';
+@import '../plugins/hint.min';
 @import 'receipt';
+@import '../plugins/float-labels';
+@import 'float-labels';
 @import 'forms';
-@import 'magnific';
+@import 'alerts';
+@import '../plugins/magnific-popup';
 @import 'layouts';
 @import 'progress-bar';
+@import 'modal';
+@import 'tables';
+@import 'theme-compatibility';
+@import 'donation-history';

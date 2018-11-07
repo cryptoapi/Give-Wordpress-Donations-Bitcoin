@@ -4,12 +4,12 @@
  *
  * @package     Give
  * @subpackage  Payments
- * @copyright   Copyright (c) 2015, WordImpress
- * @license     http://opensource.org/licenses/gpl-1.0.php GNU Public License
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -23,18 +23,30 @@ if ( ! defined( 'ABSPATH' ) ) {
  * parameters. All of the original parameters remain, but can be passed in any
  * order via the array.
  *
- * $offset = 0, $number = 20, $mode = 'live', $orderby = 'ID', $order = 'DESC',
- * $user = null, $status = 'any', $meta_key = null
- *
  * @since 1.0
  *
- * @param array $args Arguments passed to get payments
+ * @param array $args     {
+ *                        Optional. Array of arguments passed to payments query.
  *
- * @return object $payments Payments retrieved from the database
+ * @type int    $offset   The number of payments to offset before retrieval.
+ *                            Default is 0.
+ * @type int    $number   The number of payments to query for. Use -1 to request all
+ *                            payments. Default is 20.
+ * @type string $mode     Default is 'live'.
+ * @type string $order    Designates ascending or descending order of payments.
+ *                            Accepts 'ASC', 'DESC'. Default is 'DESC'.
+ * @type string $orderby  Sort retrieved payments by parameter. Default is 'ID'.
+ * @type string $status   The status of the payments. Default is 'any'.
+ * @type string $user     User. Default is null.
+ * @type string $meta_key Custom field key. Default is null.
+ *
+ * }
+ *
+ * @return array $payments Payments retrieved from the database
  */
 function give_get_payments( $args = array() ) {
 
-	// Fallback to post objects to ensure backwards compatibility
+	// Fallback to post objects to ensure backwards compatibility.
 	if ( ! isset( $args['output'] ) ) {
 		$args['output'] = 'posts';
 	}
@@ -48,12 +60,12 @@ function give_get_payments( $args = array() ) {
 /**
  * Retrieve payment by a given field
  *
- * @since       1.0
+ * @since  1.0
  *
- * @param       string $field The field to retrieve the payment with
- * @param       mixed  $value The value for $field
+ * @param  string $field The field to retrieve the payment with.
+ * @param  mixed  $value The value for $field.
  *
- * @return      mixed
+ * @return mixed
  */
 function give_get_payment_by( $field = '', $value = '' ) {
 
@@ -64,9 +76,10 @@ function give_get_payment_by( $field = '', $value = '' ) {
 	switch ( strtolower( $field ) ) {
 
 		case 'id':
-			$payment = get_post( $value );
+			$payment = new Give_Payment( $value );
+			$id      = $payment->ID;
 
-			if ( get_post_type( $payment ) != 'give_payment' ) {
+			if ( empty( $id ) ) {
 				return false;
 			}
 
@@ -76,11 +89,12 @@ function give_get_payment_by( $field = '', $value = '' ) {
 			$payment = give_get_payments( array(
 				'meta_key'       => '_give_payment_purchase_key',
 				'meta_value'     => $value,
-				'posts_per_page' => 1
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
 			) );
 
 			if ( $payment ) {
-				$payment = $payment[0];
+				$payment = new Give_Payment( $payment[0] );
 			}
 
 			break;
@@ -89,18 +103,19 @@ function give_get_payment_by( $field = '', $value = '' ) {
 			$payment = give_get_payments( array(
 				'meta_key'       => '_give_payment_number',
 				'meta_value'     => $value,
-				'posts_per_page' => 1
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
 			) );
 
 			if ( $payment ) {
-				$payment = $payment[0];
+				$payment = new Give_Payment( $payment[0] );
 			}
 
 			break;
 
 		default:
 			return false;
-	}
+	}// End switch().
 
 	if ( $payment ) {
 		return $payment;
@@ -112,243 +127,274 @@ function give_get_payment_by( $field = '', $value = '' ) {
 /**
  * Insert Payment
  *
- * @since 1.0
+ * @since  1.0
  *
- * @param array $payment_data
+ * @param  array $payment_data Arguments passed.
  *
- * @return int|bool Payment ID if payment is inserted, false otherwise
+ * @return int|bool Payment ID if payment is inserted, false otherwise.
  */
 function give_insert_payment( $payment_data = array() ) {
+
 	if ( empty( $payment_data ) ) {
 		return false;
 	}
 
-	// Make sure the payment is inserted with the correct timezone
-	date_default_timezone_set( give_get_timezone_id() );
+	/**
+	 * Fire the filter on donation data before insert.
+	 *
+	 * @since 1.8.15
+	 *
+	 * @param array $payment_data Arguments passed.
+	 */
+	$payment_data = apply_filters( 'give_pre_insert_payment', $payment_data );
 
-	// Construct the payment title
-	if ( isset( $payment_data['user_info']['first_name'] ) || isset( $payment_data['user_info']['last_name'] ) ) {
-		$payment_title = $payment_data['user_info']['first_name'] . ' ' . $payment_data['user_info']['last_name'];
-	} else {
-		$payment_title = $payment_data['user_email'];
+	$payment    = new Give_Payment();
+	$gateway    = ! empty( $payment_data['gateway'] ) ? $payment_data['gateway'] : '';
+	$gateway    = empty( $gateway ) && isset( $_POST['give-gateway'] ) ? $_POST['give-gateway'] : $gateway;
+	$form_id    = isset( $payment_data['give_form_id'] ) ? $payment_data['give_form_id'] : 0;
+	$price_id   = give_get_payment_meta_price_id( $payment_data );
+	$form_title = isset( $payment_data['give_form_title'] ) ? $payment_data['give_form_title'] : get_the_title( $form_id );
+
+	// Set properties.
+	$payment->total          = $payment_data['price'];
+	$payment->status         = ! empty( $payment_data['status'] ) ? $payment_data['status'] : 'pending';
+	$payment->currency       = ! empty( $payment_data['currency'] ) ? $payment_data['currency'] : give_get_currency( $payment_data['give_form_id'], $payment_data );
+	$payment->user_info      = $payment_data['user_info'];
+	$payment->gateway        = $gateway;
+	$payment->form_title     = $form_title;
+	$payment->form_id        = $form_id;
+	$payment->price_id       = $price_id;
+	$payment->donor_id       = ( ! empty( $payment_data['donor_id'] ) ? $payment_data['donor_id'] : '' );
+	$payment->user_id        = $payment_data['user_info']['id'];
+	$payment->email          = $payment_data['user_email'];
+	$payment->first_name     = $payment_data['user_info']['first_name'];
+	$payment->last_name      = $payment_data['user_info']['last_name'];
+	$payment->email          = $payment_data['user_info']['email'];
+	$payment->ip             = give_get_ip();
+	$payment->key            = $payment_data['purchase_key'];
+	$payment->mode           = ( ! empty( $payment_data['mode'] ) ? (string) $payment_data['mode'] : ( give_is_test_mode() ? 'test' : 'live' ) );
+	$payment->parent_payment = ! empty( $payment_data['parent'] ) ? absint( $payment_data['parent'] ) : '';
+
+	// Add the donation.
+	$args = array(
+		'price'    => $payment->total,
+		'price_id' => $payment->price_id,
+	);
+
+	$payment->add_donation( $payment->form_id, $args );
+
+
+	// Set date if present.
+	if ( isset( $payment_data['post_date'] ) ) {
+		$payment->date = $payment_data['post_date'];
 	}
 
-	// Find the next payment number, if enabled
+	// Handle sequential payments.
 	if ( give_get_option( 'enable_sequential' ) ) {
-		$number = give_get_next_payment_number();
+		$number          = give_get_next_payment_number();
+		$payment->number = give_format_payment_number( $number );
+		update_option( 'give_last_payment_number', $number );
 	}
 
-	$args = apply_filters( 'give_insert_payment_args', array(
-		'post_title'    => $payment_title,
-		'post_status'   => isset( $payment_data['status'] ) ? $payment_data['status'] : 'pending',
-		'post_type'     => 'give_payment',
-		'post_parent'   => isset( $payment_data['parent'] ) ? $payment_data['parent'] : null,
-		'post_date'     => isset( $payment_data['post_date'] ) ? $payment_data['post_date'] : null,
-		'post_date_gmt' => isset( $payment_data['post_date'] ) ? get_gmt_from_date( $payment_data['post_date'] ) : null
-	), $payment_data );
+	// Save payment.
+	$payment->save();
 
-	// Create a blank payment
-	$payment = wp_insert_post( $args );
+	/**
+	 * Fires while inserting payments.
+	 *
+	 * @since 1.0
+	 *
+	 * @param int   $payment_id   The payment ID.
+	 * @param array $payment_data Arguments passed.
+	 */
+	do_action( 'give_insert_payment', $payment->ID, $payment_data );
 
-	if ( $payment ) {
-
-		$payment_meta = array(
-			'currency'   => $payment_data['currency'],
-			'form_title' => $payment_data['give_form_title'],
-			'form_id'    => $payment_data['give_form_id'],
-			'price_id'   => give_get_price_id( $payment_data['give_form_id'], $payment_data['price'] ),
-			'user_info'  => $payment_data['user_info'],
-		);
-
-		$mode    = give_is_test_mode() ? 'test' : 'live';
-		$gateway = ! empty( $payment_data['gateway'] ) ? $payment_data['gateway'] : '';
-		$gateway = empty( $gateway ) && isset( $_POST['give-gateway'] ) ? $_POST['give-gateway'] : $gateway;
-
-		if ( ! $payment_data['price'] ) {
-			// Ensures the _give_payment_total meta key is created for donations with an amount of 0
-			$payment_data['price'] = '0.00';
-		}
-
-		// Create or update a donor
-		$donor_id = Give()->customers->add( array(
-			'name'        => $payment_data['user_info']['first_name'] . ' ' . $payment_data['user_info']['last_name'],
-			'email'       => $payment_data['user_email'],
-			'user_id'     => $payment_data['user_info']['id'],
-			'payment_ids' => $payment
-		) );
-
-		// Record the payment details
-		give_update_payment_meta( $payment, '_give_payment_meta', apply_filters( 'give_payment_meta', $payment_meta, $payment_data ) );
-		give_update_payment_meta( $payment, '_give_payment_user_id', $payment_data['user_info']['id'] );
-		give_update_payment_meta( $payment, '_give_payment_donor_id', $donor_id );
-		give_update_payment_meta( $payment, '_give_payment_user_email', $payment_data['user_email'] );
-		give_update_payment_meta( $payment, '_give_payment_user_ip', give_get_ip() );
-		give_update_payment_meta( $payment, '_give_payment_purchase_key', $payment_data['purchase_key'] );
-		give_update_payment_meta( $payment, '_give_payment_total', $payment_data['price'] );
-		give_update_payment_meta( $payment, '_give_payment_mode', $mode );
-		give_update_payment_meta( $payment, '_give_payment_gateway', $gateway );
-
-		if ( give_get_option( 'enable_sequential' ) ) {
-			give_update_payment_meta( $payment, '_give_payment_number', $number );
-		}
-
-		// Clear the user's purchased cache
-		delete_transient( 'give_user_' . $payment_data['user_info']['id'] . '_purchases' );
-
-		do_action( 'give_insert_payment', $payment, $payment_data );
-
-		return $payment; // Return the ID
-
+	// Return payment ID upon success.
+	if ( ! empty( $payment->ID ) ) {
+		return $payment->ID;
 	}
 
-	// Return false if no payment was inserted
+	// Return false if no payment was inserted.
 	return false;
+
+}
+
+/**
+ * Create payment.
+ *
+ * @param $payment_data
+ *
+ * @return bool|int
+ */
+function give_create_payment( $payment_data ) {
+
+	$form_id  = intval( $payment_data['post_data']['give-form-id'] );
+	$price_id = isset( $payment_data['post_data']['give-price-id'] ) ? $payment_data['post_data']['give-price-id'] : '';
+
+	// Collect payment data.
+	$insert_payment_data = array(
+		'price'           => $payment_data['price'],
+		'give_form_title' => $payment_data['post_data']['give-form-title'],
+		'give_form_id'    => $form_id,
+		'give_price_id'   => $price_id,
+		'date'            => $payment_data['date'],
+		'user_email'      => $payment_data['user_email'],
+		'purchase_key'    => $payment_data['purchase_key'],
+		'currency'        => give_get_currency( $form_id, $payment_data ),
+		'user_info'       => $payment_data['user_info'],
+		'status'          => 'pending',
+		'gateway'         => 'paypal',
+	);
+
+	/**
+	 * Filter the payment params.
+	 *
+	 * @since 1.8
+	 *
+	 * @param array $insert_payment_data
+	 */
+	$insert_payment_data = apply_filters( 'give_create_payment', $insert_payment_data );
+
+	// Record the pending payment.
+	return give_insert_payment( $insert_payment_data );
 }
 
 /**
  * Updates a payment status.
  *
- * @since 1.0
+ * @param  int    $payment_id Payment ID.
+ * @param  string $new_status New Payment Status. Default is 'publish'.
  *
- * @param int    $payment_id Payment ID
- * @param string $new_status New Payment Status (default: publish)
+ * @since  1.0
  *
- * @return void
+ * @return bool
  */
 function give_update_payment_status( $payment_id, $new_status = 'publish' ) {
 
-	if ( $new_status == 'completed' || $new_status == 'complete' ) {
-		$new_status = 'publish';
-	}
+	$updated = false;
+	$payment = new Give_Payment( $payment_id );
 
-	if ( empty( $payment_id ) ) {
-		return;
-	}
+	if ( $payment && $payment->ID > 0 ) {
 
-	$payment = get_post( $payment_id );
-
-	if ( is_wp_error( $payment ) || ! is_object( $payment ) ) {
-		return;
-	}
-
-	$old_status = $payment->post_status;
-
-	if ( $old_status === $new_status ) {
-		return; // Don't permit status changes that aren't changes
-	}
-
-	$do_change = apply_filters( 'give_should_update_payment_status', true, $payment_id, $new_status, $old_status );
-
-	if ( $do_change ) {
-
-		do_action( 'give_before_payment_status_change', $payment_id, $new_status, $old_status );
-
-		$update_fields = array(
-			'ID'          => $payment_id,
-			'post_status' => $new_status,
-			'edit_date'   => current_time( 'mysql' )
-		);
-
-		wp_update_post( apply_filters( 'give_update_payment_status_fields', $update_fields ) );
-
-		do_action( 'give_update_payment_status', $payment_id, $new_status, $old_status );
+		$payment->status = $new_status;
+		$updated         = $payment->save();
 
 	}
+
+	return $updated;
 }
+
 
 /**
  * Deletes a Donation
  *
- * @since 1.0
- * @global    $give_logs
- * @uses  Give_Logging::delete_logs()
+ * @since  1.0
  *
- * @param int $payment_id Payment ID (default: 0)
+ * @param  int  $payment_id   Payment ID (default: 0).
+ * @param  bool $update_donor If we should update the donor stats (default:true).
  *
  * @return void
  */
-function give_delete_purchase( $payment_id = 0 ) {
-	global $give_logs;
+function give_delete_donation( $payment_id = 0, $update_donor = true ) {
+	$payment = new Give_Payment( $payment_id );
 
-	$post = get_post( $payment_id );
-
-	if ( ! $post ) {
+	// Bailout.
+	if ( ! $payment->ID ) {
 		return;
 	}
 
-	$form_id = give_get_payment_form_id( $payment_id );
+	$amount   = give_donation_amount( $payment_id );
+	$status   = $payment->post_status;
+	$donor_id = give_get_payment_donor_id( $payment_id );
+	$donor    = new Give_Donor( $donor_id );
 
-	give_undo_purchase( $form_id, $payment_id );
+	// Only undo donations that aren't these statuses.
+	$dont_undo_statuses = apply_filters( 'give_undo_donation_statuses', array(
+		'pending',
+		'cancelled',
+	) );
 
-	$amount   = give_get_payment_amount( $payment_id );
-	$status   = $post->post_status;
-	$donor_id = give_get_payment_customer_id( $payment_id );
+	if ( ! in_array( $status, $dont_undo_statuses ) ) {
+		give_undo_donation( $payment_id );
+	}
 
-	if ( $status == 'revoked' || $status == 'publish' ) {
-		// Only decrease earnings if they haven't already been decreased (or were never increased for this payment)
+	// Only undo donations that aren't these statuses.
+	$status_to_decrease_stats = apply_filters( 'give_decrease_donor_statuses', array( 'publish' ) );
+
+	if ( in_array( $status, $status_to_decrease_stats ) ) {
+
+		// Only decrease earnings if they haven't already been decreased (or were never increased for this payment).
 		give_decrease_total_earnings( $amount );
-		// Clear the This Month earnings (this_monththis_month is NOT a typo)
-		delete_transient( md5( 'give_earnings_this_monththis_month' ) );
 
-		if ( $donor_id ) {
+		// @todo: Refresh only range related stat cache
+		give_delete_donation_stats();
 
-			// Decrement the stats for the donor
-			Give()->customers->decrement_stats( $donor_id, $amount );
+		if ( $donor->id && $update_donor ) {
+
+			// Decrement the stats for the donor.
+			$donor->decrease_donation_count();
+			$donor->decrease_value( $amount );
 
 		}
 	}
 
+	/**
+	 * Fires before deleting payment.
+	 *
+	 * @param int $payment_id Payment ID.
+	 *
+	 * @since 1.0
+	 */
 	do_action( 'give_payment_delete', $payment_id );
 
-	if ( $donor_id ) {
-
-		// Remove the payment ID from the donor
-		Give()->customers->remove_payment( $donor_id, $payment_id );
-
+	if ( $donor->id && $update_donor ) {
+		// Remove the payment ID from the donor.
+		$donor->remove_payment( $payment_id );
 	}
 
-	// Remove the payment
+	// Remove the payment.
 	wp_delete_post( $payment_id, true );
 
-	// Remove related sale log entries
-	$give_logs->delete_logs(
-		null,
-		'sale',
-		array(
-			array(
-				'key'   => '_give_log_payment_id',
-				'value' => $payment_id
-			)
-		)
-	);
+	// Remove related sale log entries.
+	Give()->logs->delete_logs( $payment_id );
 
+	/**
+	 * Fires after payment deleted.
+	 *
+	 * @param int $payment_id Payment ID.
+	 *
+	 * @since 1.0
+	 */
 	do_action( 'give_payment_deleted', $payment_id );
 }
 
 /**
- * Undoes a donation, including the decrease of donations and earning stats. Used for when refunding or deleting a donation
+ * Undo Donation
  *
- * @since 1.0
+ * Undoes a donation, including the decrease of donations and earning stats.
+ * Used for when refunding or deleting a donation.
  *
- * @param int $form_id    Form (Post) ID
- * @param int $payment_id Payment ID
+ * @param  int $payment_id Payment ID.
+ *
+ * @since  1.0
  *
  * @return void
  */
-function give_undo_purchase( $form_id, $payment_id ) {
+function give_undo_donation( $payment_id ) {
 
-	if ( give_is_test_mode() ) {
-		return;
+	$payment = new Give_Payment( $payment_id );
+
+	$maybe_decrease_earnings = apply_filters( 'give_decrease_earnings_on_undo', true, $payment, $payment->form_id );
+	if ( true === $maybe_decrease_earnings ) {
+		// Decrease earnings.
+		give_decrease_form_earnings( $payment->form_id, $payment->total );
 	}
 
-	$amount = give_get_payment_amount( $payment_id );
-
-	// decrease earnings
-	give_decrease_earnings( $form_id, $amount );
-
-	// decrease purchase count
-	give_decrease_purchase_count( $form_id );
-
+	$maybe_decrease_donations = apply_filters( 'give_decrease_donations_on_undo', true, $payment, $payment->form_id );
+	if ( true === $maybe_decrease_donations ) {
+		// Decrease donation count.
+		give_decrease_donation_count( $payment->form_id );
+	}
 
 }
 
@@ -358,178 +404,112 @@ function give_undo_purchase( $form_id, $payment_id ) {
  *
  * Returns the total number of payments recorded.
  *
- * @since 1.0
+ * @param  array $args Arguments passed.
  *
- * @param array $args
+ * @since  1.0
  *
- * @return array $count Number of payments sorted by payment status
+ * @return object $stats Contains the number of payments per payment status.
  */
 function give_count_payments( $args = array() ) {
-
-	global $wpdb;
-
-	$defaults = array(
-		'user'       => null,
-		's'          => null,
-		'start-date' => null,
-		'end-date'   => null,
-	);
-
-	$args = wp_parse_args( $args, $defaults );
-
-	$join  = '';
-	$where = "WHERE p.post_type = 'give_payment'";
-
-	// Count payments for a specific user
-	if ( ! empty( $args['user'] ) ) {
-
-		if ( is_email( $args['user'] ) ) {
-			$field = 'email';
-		} elseif ( is_numeric( $args['user'] ) ) {
-			$field = 'id';
-		} else {
-			$field = '';
-		}
-
-		$join = "LEFT JOIN $wpdb->postmeta m ON (p.ID = m.post_id)";
-
-		if ( ! empty( $field ) ) {
-			$where .= "
-				AND m.meta_key = '_give_payment_user_{$field}'
-				AND m.meta_value = '{$args['user']}'";
-		}
-
-		// Count payments for a search
-	} elseif ( ! empty( $args['s'] ) ) {
-
-		if ( is_email( $args['s'] ) || strlen( $args['s'] ) == 32 ) {
-
-			if ( is_email( $args['s'] ) ) {
-				$field = '_give_payment_user_email';
-			} else {
-				$field = '_give_payment_purchase_key';
-			}
-
-
-			$join = "LEFT JOIN $wpdb->postmeta m ON (p.ID = m.post_id)";
-			$where .= "
-				AND m.meta_key = '{$field}'
-				AND m.meta_value = '{$args['s']}'";
-
-		} elseif ( is_numeric( $args['s'] ) ) {
-
-			$join = "LEFT JOIN $wpdb->postmeta m ON (p.ID = m.post_id)";
-			$where .= "
-				AND m.meta_key = '_give_payment_user_id'
-				AND m.meta_value = '{$args['s']}'";
-
-		} else {
-			$where .= "AND ((p.post_title LIKE '%{$args['s']}%') OR (p.post_content LIKE '%{$args['s']}%'))";
-		}
-
-	}
-
-	// Limit payments count by date
+	// Backward compatibility.
 	if ( ! empty( $args['start-date'] ) ) {
-		$date = new DateTime( $args['start-date'] );
-		$where .= "
-			AND p.post_date >= '" . $date->format( 'Y-m-d' ) . "'";
+		$args['start_date'] = $args['start-date'];
+		unset( $args['start-date'] );
 	}
 
-	if ( ! empty ( $args['end-date'] ) ) {
-		$date = new DateTime( $args['end-date'] );
-		$where .= "
-			AND p.post_date <= '" . $date->format( 'Y-m-d' ) . "'";
+	if ( ! empty( $args['end-date'] ) ) {
+		$args['end_date'] = $args['end-date'];
+		unset( $args['end-date'] );
 	}
 
-	$where = apply_filters( 'give_count_payments_where', $where );
-	$join  = apply_filters( 'give_count_payments_join', $join );
-
-	$cache_key = md5( implode( '|', $args ) . $where );
-
-	$query = "SELECT p.post_status,count( * ) AS num_posts
-		FROM $wpdb->posts p
-		$join
-		$where
-		GROUP BY p.post_status
-	";
-
-	$count = wp_cache_get( $cache_key, 'counts' );
-	if ( false !== $count ) {
-		return $count;
+	if ( ! empty( $args['form_id'] ) ) {
+		$args['give_forms'] = $args['form_id'];
+		unset( $args['form_id'] );
 	}
 
-	$count = $wpdb->get_results( $query, ARRAY_A );
+	// Extract all donations
+	$args['number']      = - 1;
+	$args['group_by']    = 'post_status';
+	$args['count']       = 'true';
 
-	$stats    = array();
-	$statuses = get_post_stati();
-	if ( isset( $statuses['private'] ) && empty( $args['s'] ) ) {
-		unset( $statuses['private'] );
-	}
+	$donations_obj   = new Give_Payments_Query( $args );
+	$donations_count = $donations_obj->get_payment_by_group();
 
-	foreach ( $statuses as $state ) {
-		$stats[ $state ] = 0;
-	}
-
-	foreach ( (array) $count as $row ) {
-		if ( 'private' == $row['post_status'] && empty( $args['s'] ) ) {
-			continue;
-		}
-
-		$stats[ $row['post_status'] ] = $row['num_posts'];
-	}
-
-	$stats = (object) $stats;
-	wp_cache_set( $cache_key, $stats, 'counts' );
-
-	return $stats;
+	/**
+	 * Filter the payment counts group by status
+	 *
+	 * @since 1.0
+	 */
+	return (object) apply_filters( 'give_count_payments', $donations_count, $args, $donations_obj );
 }
 
 
 /**
  * Check For Existing Payment
  *
- * @since 1.0
+ * @param  int $payment_id Payment ID.
  *
- * @param int $payment_id Payment ID
+ * @since  1.0
  *
- * @return bool true if payment exists, false otherwise
+ * @return bool $exists True if payment exists, false otherwise.
  */
 function give_check_for_existing_payment( $payment_id ) {
-	$payment = get_post( $payment_id );
+	$exists  = false;
+	$payment = new Give_Payment( $payment_id );
 
-	if ( $payment && $payment->post_status == 'publish' ) {
-		return true; // Payment exists
+	if ( $payment_id === $payment->ID && 'publish' === $payment->status ) {
+		$exists = true;
 	}
 
-	return false; // This payment doesn't exist
+	return $exists;
 }
 
 /**
  * Get Payment Status
  *
+ * @param WP_Post|Give_Payment|int $payment      Payment object or payment ID.
+ * @param bool                     $return_label Whether to return the translated status label instead of status value.
+ *                                               Default false.
+ *
  * @since 1.0
  *
- * @param WP_Post $payment
- * @param bool    $return_label Whether to return the donation status or not
- *
- * @return bool|mixed if payment status exists, false otherwise
+ * @return bool|mixed True if payment status exists, false otherwise.
  */
 function give_get_payment_status( $payment, $return_label = false ) {
+
+	if ( is_numeric( $payment ) ) {
+
+		$payment = new Give_Payment( $payment );
+
+		if ( ! $payment->ID > 0 ) {
+			return false;
+		}
+
+	}
+
 	if ( ! is_object( $payment ) || ! isset( $payment->post_status ) ) {
 		return false;
 	}
 
 	$statuses = give_get_payment_statuses();
+
 	if ( ! is_array( $statuses ) || empty( $statuses ) ) {
 		return false;
 	}
 
-	if ( array_key_exists( $payment->post_status, $statuses ) ) {
+	// Get payment object if not already given.
+	$payment = $payment instanceof Give_Payment ? $payment : new Give_Payment( $payment->ID );
+
+	if ( array_key_exists( $payment->status, $statuses ) ) {
 		if ( true === $return_label ) {
-			return $statuses[ $payment->post_status ];
+			// Return translated status label.
+			return $statuses[ $payment->status ];
 		} else {
-			return array_search( $payment->post_status, $statuses );
+			// Account that our 'publish' status is labeled 'Complete'
+			$post_status = 'publish' === $payment->status ? 'Complete' : $payment->post_status;
+
+			// Make sure we're matching cases, since they matter
+			return array_search( strtolower( $post_status ), array_map( 'strtolower', $statuses ) );
 		}
 	}
 
@@ -539,8 +519,9 @@ function give_get_payment_status( $payment, $return_label = false ) {
 /**
  * Retrieves all available statuses for payments.
  *
- * @since 1.0
- * @return array $payment_status All the available payment statuses
+ * @since  1.0
+ *
+ * @return array $payment_status All the available payment statuses.
  */
 function give_get_payment_statuses() {
 	$payment_statuses = array(
@@ -551,7 +532,8 @@ function give_get_payment_statuses() {
 		'cancelled'   => __( 'Cancelled', 'give' ),
 		'abandoned'   => __( 'Abandoned', 'give' ),
 		'preapproval' => __( 'Pre-Approved', 'give' ),
-		'revoked'     => __( 'Revoked', 'give' )
+		'processing'  => __( 'Processing', 'give' ),
+		'revoked'     => __( 'Revoked', 'give' ),
 	);
 
 	return apply_filters( 'give_payment_statuses', $payment_statuses );
@@ -560,10 +542,11 @@ function give_get_payment_statuses() {
 /**
  * Get Payment Status Keys
  *
- * @description Retrieves keys for all available statuses for payments
+ * Retrieves keys for all available statuses for payments
  *
- * @since       1.0
- * @return array $payment_status All the available payment statuses
+ * @since 1.0
+ *
+ * @return array $payment_status All the available payment statuses.
  */
 function give_get_payment_status_keys() {
 	$statuses = array_keys( give_get_payment_statuses() );
@@ -575,52 +558,67 @@ function give_get_payment_status_keys() {
 /**
  * Get Earnings By Date
  *
- * @since 1.0
+ * @param int $day       Day number. Default is null.
+ * @param int $month_num Month number. Default is null.
+ * @param int $year      Year number. Default is null.
+ * @param int $hour      Hour number. Default is null.
  *
- * @param int $day       Day number
- * @param int $month_num Month number
- * @param int $year      Year
- * @param int $hour      Hour
+ * @since 1.0
  *
  * @return int $earnings Earnings
  */
 function give_get_earnings_by_date( $day = null, $month_num, $year = null, $hour = null ) {
-
-	// This is getting deprecated soon. Use Give_Payment_Stats with the get_earnings() method instead
+	// This is getting deprecated soon. Use Give_Payment_Stats with the get_earnings() method instead.
 
 	global $wpdb;
+	$meta_table = __give_v20_bc_table_details( 'payment' );
 
 	$args = array(
 		'post_type'              => 'give_payment',
 		'nopaging'               => true,
 		'year'                   => $year,
 		'monthnum'               => $month_num,
-		'post_status'            => array( 'publish', 'revoked' ),
+		'post_status'            => array( 'publish' ),
 		'fields'                 => 'ids',
-		'update_post_term_cache' => false
+		'update_post_term_cache' => false,
 	);
 	if ( ! empty( $day ) ) {
 		$args['day'] = $day;
 	}
 
-	if ( ! empty( $hour ) ) {
+	if ( isset( $hour ) ) {
 		$args['hour'] = $hour;
 	}
 
-	$args     = apply_filters( 'give_get_earnings_by_date_args', $args );
-	$key      = md5( serialize( $args ) );
-	$earnings = get_transient( $key );
+	$args = apply_filters( 'give_get_earnings_by_date_args', $args );
+	$key  = Give_Cache::get_key( 'give_stats', $args );
+
+	if ( ! empty( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'give-refresh-reports' ) ) {
+		$earnings = false;
+	} else {
+		$earnings = Give_Cache::get( $key );
+	}
 
 	if ( false === $earnings ) {
-		$sales    = get_posts( $args );
-		$earnings = 0;
-		if ( $sales ) {
-			$sales = implode( ',', $sales );
-			$earnings += $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_give_payment_total' AND post_id IN({$sales})" );
+		$donations = get_posts( $args );
+		$earnings  = 0;
+		if ( $donations ) {
+			$donations      = implode( ',', $donations );
+			$earning_totals = $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_give_payment_total' AND post_id IN ({$donations})" );
 
+			/**
+			 * Filter The earnings by dates.
+			 *
+			 * @since 1.8.17
+			 *
+			 * @param float $earning_totals Total earnings between the dates.
+			 * @param array $donations      Donations lists.
+			 * @param array $args           Donation query args.
+			 */
+			$earnings = apply_filters( 'give_get_earnings_by_date', $earning_totals, $donations, $args );
 		}
-		// Cache the results for one hour
-		set_transient( $key, $earnings, 60 * 60 );
+		// Cache the results for one hour.
+		Give_Cache::set( $key, $earnings, HOUR_IN_SECONDS );
 	}
 
 	return round( $earnings, 2 );
@@ -629,27 +627,40 @@ function give_get_earnings_by_date( $day = null, $month_num, $year = null, $hour
 /**
  * Get Donations (sales) By Date
  *
- * @since  1.0
+ * @param int $day       Day number. Default is null.
+ * @param int $month_num Month number. Default is null.
+ * @param int $year      Year number. Default is null.
+ * @param int $hour      Hour number. Default is null.
  *
- * @param int $day       Day number
- * @param int $month_num Month number
- * @param int $year      Year
- * @param int $hour      Hour
+ * @since 1.0
  *
  * @return int $count Sales
  */
 function give_get_sales_by_date( $day = null, $month_num = null, $year = null, $hour = null ) {
 
-	// This is getting deprecated soon. Use Give_Payment_Stats with the get_sales() method instead
+	// This is getting deprecated soon. Use Give_Payment_Stats with the get_sales() method instead.
 	$args = array(
 		'post_type'              => 'give_payment',
 		'nopaging'               => true,
 		'year'                   => $year,
 		'fields'                 => 'ids',
-		'post_status'            => array( 'publish', 'revoked' ),
+		'post_status'            => array( 'publish' ),
 		'update_post_meta_cache' => false,
-		'update_post_term_cache' => false
+		'update_post_term_cache' => false,
 	);
+
+	$show_free = apply_filters( 'give_sales_by_date_show_free', true, $args );
+
+	if ( false === $show_free ) {
+		$args['meta_query'] = array(
+			array(
+				'key'     => '_give_payment_total',
+				'value'   => 0,
+				'compare' => '>',
+				'type'    => 'NUMERIC',
+			),
+		);
+	}
 
 	if ( ! empty( $month_num ) ) {
 		$args['monthnum'] = $month_num;
@@ -659,20 +670,25 @@ function give_get_sales_by_date( $day = null, $month_num = null, $year = null, $
 		$args['day'] = $day;
 	}
 
-	if ( ! empty( $hour ) ) {
+	if ( isset( $hour ) ) {
 		$args['hour'] = $hour;
 	}
 
 	$args = apply_filters( 'give_get_sales_by_date_args', $args );
 
-	$key   = md5( serialize( $args ) );
-	$count = get_transient( $key );
+	$key = Give_Cache::get_key( 'give_stats', $args );
+
+	if ( ! empty( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'give-refresh-reports' ) ) {
+		$count = false;
+	} else {
+		$count = Give_Cache::get( $key );
+	}
 
 	if ( false === $count ) {
-		$sales = new WP_Query( $args );
-		$count = (int) $sales->post_count;
-		// Cache the results for one hour
-		set_transient( $key, $count, 60 * 60 );
+		$donations = new WP_Query( $args );
+		$count     = (int) $donations->post_count;
+		// Cache the results for one hour.
+		Give_Cache::set( $key, $count, HOUR_IN_SECONDS );
 	}
 
 	return $count;
@@ -681,107 +697,104 @@ function give_get_sales_by_date( $day = null, $month_num = null, $year = null, $
 /**
  * Checks whether a payment has been marked as complete.
  *
+ * @param int $payment_id Payment ID to check against.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID to check against
- *
- * @return bool true if complete, false otherwise
+ * @return bool $ret True if complete, false otherwise.
  */
 function give_is_payment_complete( $payment_id ) {
-	$payment = get_post( $payment_id );
-	$ret     = false;
-	if ( $payment && $payment->post_status == 'publish' ) {
-		$ret = true;
+	$payment = new Give_Payment( $payment_id );
+
+	$ret = false;
+
+	if ( $payment->ID > 0 ) {
+
+		if ( (int) $payment_id === (int) $payment->ID && 'publish' == $payment->status ) {
+			$ret = true;
+		}
 	}
 
 	return apply_filters( 'give_is_payment_complete', $ret, $payment_id, $payment->post_status );
 }
 
 /**
- * Get Total Sales (Donations)
+ * Get Total Donations.
  *
  * @since 1.0
- * @return int $count Total sales
+ *
+ * @return int $count Total number of donations.
  */
-function give_get_total_sales() {
+function give_get_total_donations() {
 
 	$payments = give_count_payments();
 
-	return $payments->revoked + $payments->publish;
+	return $payments->publish;
 }
 
 /**
  * Get Total Earnings
  *
+ * @param bool $recalculate Recalculate earnings forcefully.
+ *
  * @since 1.0
- * @return float $total Total earnings
+ *
+ * @return float $total Total earnings.
  */
-function give_get_total_earnings() {
+function give_get_total_earnings( $recalculate = false ) {
 
-	$total = get_option( 'give_earnings_total', 0 );
+	$total      = get_option( 'give_earnings_total', 0 );
+	$meta_table = __give_v20_bc_table_details( 'payment' );
 
-	// If no total stored in DB, use old method of calculating total earnings
-	if ( ! $total ) {
-
+	// Calculate total earnings.
+	if ( ! $total || $recalculate ) {
 		global $wpdb;
 
-		$total = get_transient( 'give_earnings_total' );
+		$total = (float) 0;
 
-		if ( false === $total ) {
+		$args = apply_filters( 'give_get_total_earnings_args', array(
+			'offset' => 0,
+			'number' => - 1,
+			'status' => array( 'publish' ),
+			'fields' => 'ids',
+		) );
 
-			$total = (float) 0;
+		$payments = give_get_payments( $args );
+		if ( $payments ) {
 
-			$args = apply_filters( 'give_get_total_earnings_args', array(
-				'offset' => 0,
-				'number' => - 1,
-				'status' => array( 'publish', 'revoked' ),
-				'fields' => 'ids'
-			) );
-
-
-			$payments = give_get_payments( $args );
-			if ( $payments ) {
-
-				/*
-				 * If performing a purchase, we need to skip the very last payment in the database, since it calls
-				 * give_increase_total_earnings() on completion, which results in duplicated earnings for the very
-				 * first purchase
-				 */
-
-				if ( did_action( 'give_update_payment_status' ) ) {
-					array_pop( $payments );
-				}
-
-				if ( ! empty( $payments ) ) {
-					$payments = implode( ',', $payments );
-					$total += $wpdb->get_var( "SELECT SUM(meta_value) FROM $wpdb->postmeta WHERE meta_key = '_give_payment_total' AND post_id IN({$payments})" );
-				}
-
+			/**
+			 * If performing a donation, we need to skip the very last payment in the database,
+			 * since it calls give_increase_total_earnings() on completion,
+			 * which results in duplicated earnings for the very first donation.
+			 */
+			if ( did_action( 'give_update_payment_status' ) ) {
+				array_pop( $payments );
 			}
 
-			// Cache results for 1 day. This cache is cleared automatically when a payment is made
-			set_transient( 'give_earnings_total', $total, 86400 );
-
-			// Store the total for the first time
-			update_option( 'give_earnings_total', $total );
+			if ( ! empty( $payments ) ) {
+				$payments = implode( ',', $payments );
+				$total    += $wpdb->get_var( "SELECT SUM(meta_value) FROM {$meta_table['name']} WHERE meta_key = '_give_payment_total' AND {$meta_table['column']['id']} IN({$payments})" );
+			}
 		}
+
+		update_option( 'give_earnings_total', $total, 'no' );
 	}
 
 	if ( $total < 0 ) {
-		$total = 0; // Don't ever show negative earnings
+		$total = 0; // Don't ever show negative earnings.
 	}
 
-	return apply_filters( 'give_total_earnings', round( $total, give_currency_decimal_filter() ) );
+	return apply_filters( 'give_total_earnings', round( $total, give_get_price_decimals() ), $total );
 }
 
 /**
  * Increase the Total Earnings
  *
+ * @param int $amount The amount you would like to increase the total earnings by. Default is 0.
+ *
  * @since 1.0
  *
- * @param $amount int The amount you would like to increase the total earnings by.
- *
- * @return float $total Total earnings
+ * @return float $total Total earnings.
  */
 function give_increase_total_earnings( $amount = 0 ) {
 	$total = give_get_total_earnings();
@@ -794,11 +807,11 @@ function give_increase_total_earnings( $amount = 0 ) {
 /**
  * Decrease the Total Earnings
  *
+ * @param int $amount The amount you would like to decrease the total earnings by.
+ *
  * @since 1.0
  *
- * @param $amount int The amount you would like to decrease the total earnings by.
- *
- * @return float $total Total earnings
+ * @return float $total Total earnings.
  */
 function give_decrease_total_earnings( $amount = 0 ) {
 	$total = give_get_total_earnings();
@@ -814,235 +827,197 @@ function give_decrease_total_earnings( $amount = 0 ) {
 /**
  * Get Payment Meta for a specific Payment
  *
+ * @param int    $payment_id Payment ID.
+ * @param string $meta_key   The meta key to pull.
+ * @param bool   $single     Pull single meta entry or as an object.
+ *
  * @since 1.0
  *
- * @param int    $payment_id Payment ID
- * @param string $meta_key   The meta key to pull
- * @param bool   $single     Pull single meta entry or as an object
- *
- * @return mixed $meta Payment Meta
+ * @return mixed $meta Payment Meta.
  */
 function give_get_payment_meta( $payment_id = 0, $meta_key = '_give_payment_meta', $single = true ) {
+	$payment = new Give_Payment( $payment_id );
 
-	$meta = get_post_meta( $payment_id, $meta_key, $single );
-
-	if ( $meta_key === '_give_payment_meta' ) {
-
-		if ( empty( $meta['key'] ) ) {
-			$meta['key'] = give_get_payment_key( $payment_id );
-		}
-
-		if ( empty( $meta['email'] ) ) {
-			$meta['email'] = give_get_payment_user_email( $payment_id );
-		}
-
-		if ( empty( $meta['date'] ) ) {
-			$meta['date'] = get_post_field( 'post_date', $payment_id );
-		}
-	}
-
-	$meta = apply_filters( 'give_get_payment_meta_' . $meta_key, $meta, $payment_id );
-
-	return apply_filters( 'give_get_payment_meta', $meta, $payment_id, $meta_key );
+	return $payment->get_meta( $meta_key, $single );
 }
 
 /**
  * Update the meta for a payment
  *
- * @param  integer $payment_id Payment ID
- * @param  string  $meta_key   Meta key to update
- * @param  string  $meta_value Value to update to
- * @param  string  $prev_value Previous value
+ * @param  int    $payment_id Payment ID.
+ * @param  string $meta_key   Meta key to update.
+ * @param  string $meta_value Value to update to.
+ * @param  string $prev_value Previous value.
  *
- * @return mixed               Meta ID if successful, false if unsuccessful
+ * @return mixed Meta ID if successful, false if unsuccessful.
  */
 function give_update_payment_meta( $payment_id = 0, $meta_key = '', $meta_value = '', $prev_value = '' ) {
+	$payment = new Give_Payment( $payment_id );
 
-	if ( empty( $payment_id ) || empty( $meta_key ) ) {
-		return;
-	}
-
-	if ( $meta_key == 'key' || $meta_key == 'date' ) {
-
-		$current_meta              = give_get_payment_meta( $payment_id );
-		$current_meta[ $meta_key ] = $meta_value;
-
-		$meta_key   = '_give_payment_meta';
-		$meta_value = $current_meta;
-
-	} else if ( $meta_key == 'email' || $meta_key == '_give_payment_user_email' ) {
-
-		$meta_value = apply_filters( 'give_give_update_payment_meta_' . $meta_key, $meta_value, $payment_id );
-		update_post_meta( $payment_id, '_give_payment_user_email', $meta_value );
-
-		$current_meta                       = give_get_payment_meta( $payment_id );
-		$current_meta['user_info']['email'] = $meta_value;
-
-		$meta_key   = '_give_payment_meta';
-		$meta_value = $current_meta;
-
-	}
-
-	$meta_value = apply_filters( 'give_give_update_payment_meta_' . $meta_key, $meta_value, $payment_id );
-
-	return update_post_meta( $payment_id, $meta_key, $meta_value, $prev_value );
+	return $payment->update_meta( $meta_key, $meta_value, $prev_value );
 }
 
 /**
  * Get the user_info Key from Payment Meta
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return array $user_info User Info Meta Values
+ * @return array $user_info User Info Meta Values.
  */
 function give_get_payment_meta_user_info( $payment_id ) {
-	$payment_meta = give_get_payment_meta( $payment_id );
-	$user_info    = isset( $payment_meta['user_info'] ) ? maybe_unserialize( $payment_meta['user_info'] ) : false;
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_meta_user_info', $user_info );
+	return $payment->user_info;
 }
 
 /**
  * Get the donations Key from Payment Meta
  *
- * @description Retrieves the form_id from a (Previously title give_get_payment_meta_donations)
- * @since       1.0
+ * Retrieves the form_id from a (Previously titled give_get_payment_meta_donations)
  *
- * @param int $payment_id Payment ID
+ * @param int $payment_id Payment ID.
  *
- * @return array $donations Downloads Meta Values
+ * @since 1.0
+ *
+ * @return int $form_id Form ID.
  */
 function give_get_payment_form_id( $payment_id ) {
-	$payment_meta = give_get_payment_meta( $payment_id );
+	$payment = new Give_Payment( $payment_id );
 
-	$form_id = isset( $payment_meta['form_id'] ) ? $payment_meta['form_id'] : 0;
-
-	return apply_filters( 'give_get_payment_form_id', $form_id );
+	return $payment->form_id;
 }
 
 /**
  * Get the user email associated with a payment
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $email User Email
+ * @return string $email User email.
  */
 function give_get_payment_user_email( $payment_id ) {
-	$email = give_get_payment_meta( $payment_id, '_give_payment_user_email', true );
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_user_email', $email );
+	return $payment->email;
+}
+
+/**
+ * Is the payment provided associated with a user account
+ *
+ * @param int $payment_id The payment ID.
+ *
+ * @since 1.3
+ *
+ * @return bool $is_guest_payment If the payment is associated with a user (false) or not (true)
+ */
+function give_is_guest_payment( $payment_id ) {
+	$payment_user_id  = give_get_payment_user_id( $payment_id );
+	$is_guest_payment = ! empty( $payment_user_id ) && $payment_user_id > 0 ? false : true;
+
+	return (bool) apply_filters( 'give_is_guest_payment', $is_guest_payment, $payment_id );
 }
 
 /**
  * Get the user ID associated with a payment
  *
- * @since 1.0
+ * @param int $payment_id Payment ID.
  *
- * @param int $payment_id Payment ID
+ * @since 1.3
  *
- * @return string $user_id User ID
+ * @return int $user_id User ID.
  */
 function give_get_payment_user_id( $payment_id ) {
-	$user_id = give_get_payment_meta( $payment_id, '_give_payment_user_id', true );
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_user_id', $user_id );
+	return $payment->user_id;
 }
 
 /**
- * Get the donor ID associated with a payment
+ * Get the donor ID associated with a payment.
+ *
+ * @param int $payment_id Payment ID.
  *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $donor_id Donor ID
+ * @return int $payment->customer_id Donor ID.
  */
-function give_get_payment_customer_id( $payment_id ) {
-	$donor_id = get_post_meta( $payment_id, '_give_payment_donor_id', true );
+function give_get_payment_donor_id( $payment_id ) {
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_donor_id', $donor_id );
+	return $payment->customer_id;
 }
 
 /**
- * Get the IP address used to make a purchase
+ * Get the IP address used to make a donation
+ *
+ * @param int $payment_id Payment ID.
  *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $ip User IP
+ * @return string $ip User IP.
  */
 function give_get_payment_user_ip( $payment_id ) {
-	$ip = give_get_payment_meta( $payment_id, '_give_payment_user_ip', true );
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_user_ip', $ip );
+	return $payment->ip;
 }
 
 /**
  * Get the date a payment was completed
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $date The date the payment was completed
+ * @return string $date The date the payment was completed.
  */
 function give_get_payment_completed_date( $payment_id = 0 ) {
+	$payment = new Give_Payment( $payment_id );
 
-	$payment = get_post( $payment_id );
-
-	if ( 'pending' == $payment->post_status || 'preapproved' == $payment->post_status ) {
-		return false; // This payment was never completed
-	}
-
-	$date = ( $date = give_get_payment_meta( $payment_id, '_give_completed_date', true ) ) ? $date : $payment->modified_date;
-
-	return apply_filters( 'give_payment_completed_date', $date, $payment_id );
+	return $payment->completed_date;
 }
 
 /**
  * Get the gateway associated with a payment
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $gateway Gateway
+ * @return string $gateway Gateway.
  */
 function give_get_payment_gateway( $payment_id ) {
-	$gateway = give_get_payment_meta( $payment_id, '_give_payment_gateway', true );
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_gateway', $gateway );
+	return $payment->gateway;
 }
 
 /**
  * Get the currency code a payment was made in
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $currency The currency code
+ * @return string $currency The currency code.
  */
 function give_get_payment_currency_code( $payment_id = 0 ) {
-	$meta     = give_get_payment_meta( $payment_id );
-	$currency = isset( $meta['currency'] ) ? $meta['currency'] : give_get_currency();
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_currency_code', $currency, $payment_id );
+	return $payment->currency;
 }
 
 /**
  * Get the currency name a payment was made in
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $currency The currency name
+ * @return string $currency The currency name.
  */
 function give_get_payment_currency( $payment_id = 0 ) {
 	$currency = give_get_payment_currency_code( $payment_id );
@@ -1051,18 +1026,18 @@ function give_get_payment_currency( $payment_id = 0 ) {
 }
 
 /**
- * Get the purchase key for a purchase
+ * Get the key for a donation
+ *
+ * @param int $payment_id Payment ID.
  *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $key Purchase key
+ * @return string $key Donation key.
  */
 function give_get_payment_key( $payment_id = 0 ) {
-	$key = give_get_payment_meta( $payment_id, '_give_payment_purchase_key', true );
+	$payment = new Give_Payment( $payment_id );
 
-	return apply_filters( 'give_payment_key', $key, $payment_id );
+	return $payment->key;
 }
 
 /**
@@ -1070,29 +1045,44 @@ function give_get_payment_key( $payment_id = 0 ) {
  *
  * This will return the payment ID if sequential order numbers are not enabled or the order number does not exist
  *
+ * @param int $payment_id Payment ID.
+ *
  * @since 1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string $number Payment order number
+ * @return string $number Payment order number.
  */
 function give_get_payment_number( $payment_id = 0 ) {
+	$payment = new Give_Payment( $payment_id );
 
-	$number = $payment_id;
+	return $payment->number;
+}
 
-	if ( give_get_option( 'enable_sequential' ) ) {
+/**
+ * Formats the payment number with the prefix and postfix
+ *
+ * @param int $number The payment number to format.
+ *
+ * @since 1.3
+ *
+ * @return string      The formatted payment number.
+ */
+function give_format_payment_number( $number ) {
 
-		$number = give_get_payment_meta( $payment_id, '_give_payment_number', true );
-
-		if ( ! $number ) {
-
-			$number = $payment_id;
-
-		}
-
+	if ( ! give_get_option( 'enable_sequential' ) ) {
+		return $number;
 	}
 
-	return apply_filters( 'give_payment_number', $number, $payment_id );
+	if ( ! is_numeric( $number ) ) {
+		return $number;
+	}
+
+	$prefix  = give_get_option( 'sequential_prefix' );
+	$number  = absint( $number );
+	$postfix = give_get_option( 'sequential_postfix' );
+
+	$formatted_number = $prefix . $number . $postfix;
+
+	return apply_filters( 'give_format_payment_number', $formatted_number, $prefix, $number, $postfix );
 }
 
 /**
@@ -1101,7 +1091,8 @@ function give_get_payment_number( $payment_id = 0 ) {
  * This is used when inserting a new payment
  *
  * @since 1.0
- * @return string $number The next available payment number
+ *
+ * @return string $number The next available payment number.
  */
 function give_get_next_payment_number() {
 
@@ -1109,129 +1100,230 @@ function give_get_next_payment_number() {
 		return false;
 	}
 
-	$prefix  = give_get_option( 'sequential_prefix' );
-	$postfix = give_get_option( 'sequential_postfix' );
-	$start   = give_get_option( 'sequential_start', 1 );
+	$number           = get_option( 'give_last_payment_number' );
+	$start            = give_get_option( 'sequential_start', 1 );
+	$increment_number = true;
 
-	$payments = new Give_Payments_Query( array(
-		'number'  => 1,
-		'order'   => 'DESC',
-		'orderby' => 'ID',
-		'output'  => 'posts',
-		'fields'  => 'ids'
-	) );
-
-	$last_payment = $payments->get_payments();
-
-	if ( $last_payment ) {
-
-		$number = give_get_payment_number( $last_payment[0] );
+	if ( false !== $number ) {
 
 		if ( empty( $number ) ) {
 
-			$number = $prefix . $start . $postfix;
+			$number           = $start;
+			$increment_number = false;
 
-		} else {
+		}
+	} else {
 
-			// Remove prefix and postfix
-			$number = str_replace( $prefix, '', $number );
-			$number = str_replace( $postfix, '', $number );
+		// This case handles the first addition of the new option, as well as if it get's deleted for any reason.
+		$payments     = new Give_Payments_Query( array(
+			'number'  => 1,
+			'order'   => 'DESC',
+			'orderby' => 'ID',
+			'output'  => 'posts',
+			'fields'  => 'ids',
+		) );
+		$last_payment = $payments->get_payments();
 
-			// Ensure it's a whole number
-			$number = intval( $number );
+		if ( ! empty( $last_payment ) ) {
 
-			// Increment the payment number
-			$number ++;
-
-			// Re-add the prefix and postfix
-			$number = $prefix . $number . $postfix;
+			$number = give_get_payment_number( $last_payment[0] );
 
 		}
 
-	} else {
+		if ( ! empty( $number ) && $number !== (int) $last_payment[0] ) {
 
-		$number = $prefix . $start . $postfix;
+			$number = give_remove_payment_prefix_postfix( $number );
 
+		} else {
+
+			$number           = $start;
+			$increment_number = false;
+		}
+	}// End if().
+
+	$increment_number = apply_filters( 'give_increment_payment_number', $increment_number, $number );
+
+	if ( $increment_number ) {
+		$number ++;
 	}
 
 	return apply_filters( 'give_get_next_payment_number', $number );
 }
 
 /**
- * Get Payment Amount
+ * Given a given a number, remove the pre/postfix
  *
- * @description Get the fully formatted payment amount. The payment amount is retrieved using give_get_payment_amount() and is then sent through give_currency_filter() and  give_format_amount() to format the amount correctly.
+ * @param string $number The formatted Current Number to increment.
  *
- * @since       1.0
+ * @since 1.3
  *
- * @param int $payment_id Payment ID
- *
- * @return string $amount Fully formatted payment amount
+ * @return string The new Payment number without prefix and postfix.
  */
-function give_payment_amount( $payment_id = 0 ) {
-	$amount = give_get_payment_amount( $payment_id );
+function give_remove_payment_prefix_postfix( $number ) {
 
-	return give_currency_filter( give_format_amount( $amount ), give_get_payment_currency_code( $payment_id ) );
+	$prefix  = give_get_option( 'sequential_prefix' );
+	$postfix = give_get_option( 'sequential_postfix' );
+
+	// Remove prefix.
+	$number = preg_replace( '/' . $prefix . '/', '', $number, 1 );
+
+	// Remove the postfix.
+	$length      = strlen( $number );
+	$postfix_pos = strrpos( $number, $postfix );
+	if ( false !== $postfix_pos ) {
+		$number = substr_replace( $number, '', $postfix_pos, $length );
+	}
+
+	// Ensure it's a whole number.
+	$number = intval( $number );
+
+	return apply_filters( 'give_remove_payment_prefix_postfix', $number, $prefix, $postfix );
+
 }
 
 /**
- * Get the amount associated with a payment
+ * Get Donation Amount
  *
- * @access public
- * @since  1.0
+ * Get the fully formatted or unformatted donation amount which is sent through give_currency_filter()
+ * and give_format_amount() to format the amount correctly in case of formatted amount.
  *
- * @param int $payment_id Payment ID
+ * @param int|Give_Payment $donation    Donation ID or Donation Object.
+ * @param bool|array       $format_args Currency Formatting Arguments.
  *
- * @return mixed|void
+ * @since 1.0
+ * @since 1.8.17 Added filter and internally use functions.
+ *
+ * @return string $amount Fully formatted donation amount.
  */
-function give_get_payment_amount( $payment_id ) {
+function give_donation_amount( $donation, $format_args = array() ) {
+	/* @var Give_Payment $donation */
+	if ( ! ( $donation instanceof Give_Payment ) ) {
+		$donation = new Give_Payment( absint( $donation ) );
+	}
 
-	$amount = give_get_payment_meta( $payment_id, '_give_payment_total', true );
+	$amount           = $donation->total;
+	$formatted_amount = $amount;
 
-	if ( empty( $amount ) && '0.00' != $amount ) {
-		$meta = give_get_payment_meta( $payment_id, '_give_payment_meta', true );
-		$meta = maybe_unserialize( $meta );
+	if ( is_bool( $format_args ) ) {
+		$format_args = array(
+			'currency' => (bool) $format_args,
+			'amount'   => (bool) $format_args,
+		);
+	}
 
-		if ( isset( $meta['amount'] ) ) {
-			$amount = $meta['amount'];
+	$format_args = wp_parse_args(
+		$format_args,
+		array(
+			'currency' => false,
+			'amount'   => false,
+
+			// Define context of donation amount, by default keep $type as blank.
+			// Pass as 'stats' to calculate donation report on basis of base amount for the Currency-Switcher Add-on.
+			// For Eg. In Currency-Switcher add on when donation has been made through
+			// different currency other than base currency, in that case for correct
+			//report calculation based on base currency we will need to return donation
+			// base amount and not the converted amount .
+			'type'     => '',
+		)
+	);
+
+	if ( $format_args['amount'] || $format_args['currency'] ) {
+
+		if ( $format_args['amount'] ) {
+
+			$formatted_amount = give_format_amount(
+				$amount,
+				! is_array( $format_args['amount'] ) ?
+					array(
+						'sanitize' => false,
+						'currency' => $donation->currency,
+					) :
+					$format_args['amount']
+			);
+		}
+
+		if ( $format_args['currency'] ) {
+			$formatted_amount = give_currency_filter(
+				$formatted_amount,
+				! is_array( $format_args['currency'] ) ?
+					array( 'currency_code' => $donation->currency ) :
+					$format_args['currency']
+			);
 		}
 	}
 
-	return apply_filters( 'give_payment_amount', floatval( $amount ), $payment_id );
+	/**
+	 * Filter Donation amount.
+	 *
+	 * @since 1.8.17
+	 *
+	 * @param string $formatted_amount Formatted/Un-formatted amount.
+	 * @param float  $amount           Donation amount.
+	 * @param int    $donation_id      Donation ID.
+	 * @param string $type             Donation amount type.
+	 */
+	return apply_filters( 'give_donation_amount', (string) $formatted_amount, $amount, $donation, $format_args );
 }
 
+/**
+ * Payment Subtotal
+ *
+ * Retrieves subtotal for payment and then returns a full formatted amount. This
+ * function essentially calls give_get_payment_subtotal()
+ *
+ * @param int $payment_id Payment ID.
+ *
+ * @since 1.5
+ *
+ * @see   give_get_payment_subtotal()
+ *
+ * @return array Fully formatted payment subtotal.
+ */
+function give_payment_subtotal( $payment_id = 0 ) {
+	$subtotal = give_get_payment_subtotal( $payment_id );
+
+	return give_currency_filter( give_format_amount( $subtotal, array( 'sanitize' => false ) ), array( 'currency_code' => give_get_payment_currency_code( $payment_id ) ) );
+}
 
 /**
- * Retrieves the transaction ID for the given payment
+ * Get Payment Subtotal
+ *
+ * Retrieves subtotal for payment and then returns a non formatted amount.
+ *
+ * @param int $payment_id Payment ID.
+ *
+ * @since 1.5
+ *
+ * @return float $subtotal Subtotal for payment (non formatted).
+ */
+function give_get_payment_subtotal( $payment_id = 0 ) {
+	$payment = new Give_Payment( $payment_id );
+
+	return $payment->subtotal;
+}
+
+/**
+ * Retrieves the donation ID
+ *
+ * @param int $payment_id Payment ID.
  *
  * @since  1.0
  *
- * @param int $payment_id Payment ID
- *
- * @return string The Transaction ID
+ * @return string The donation ID.
  */
 function give_get_payment_transaction_id( $payment_id = 0 ) {
+	$payment = new Give_Payment( $payment_id );
 
-	$transaction_id = false;
-	$transaction_id = give_get_payment_meta( $payment_id, '_give_payment_transaction_id', true );
-
-	if ( empty( $transaction_id ) ) {
-
-		$gateway        = give_get_payment_gateway( $payment_id );
-		$transaction_id = apply_filters( 'give_get_payment_transaction_id-' . $gateway, $payment_id );
-
-	}
-
-	return apply_filters( 'give_get_payment_transaction_id', $transaction_id, $payment_id );
+	return $payment->transaction_id;
 }
 
 /**
- * Sets a Transaction ID in post meta for the given Payment ID
+ * Sets a Transaction ID in post meta for the given Payment ID.
+ *
+ * @param int    $payment_id     Payment ID.
+ * @param string $transaction_id The transaction ID from the gateway.
  *
  * @since  1.0
- *
- * @param int    $payment_id     Payment ID
- * @param string $transaction_id The transaction ID from the gateway
  *
  * @return bool|mixed
  */
@@ -1247,20 +1339,57 @@ function give_set_payment_transaction_id( $payment_id = 0, $transaction_id = '' 
 }
 
 /**
- * Retrieve the purchase ID based on the purchase key
+ * Retrieve the donation ID based on the key
+ *
+ * @param string  $key  the key to search for.
  *
  * @since 1.0
- * @global object $wpdb Used to query the database using the WordPress
- *                      Database API
+ * @global object $wpdb Used to query the database using the WordPress Database API.
  *
- * @param string  $key  the purchase key to search for
- *
- * @return int $purchase Purchase ID
+ * @return int $purchase Donation ID.
  */
-function give_get_purchase_id_by_key( $key ) {
+function give_get_donation_id_by_key( $key ) {
 	global $wpdb;
 
-	$purchase = $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_give_payment_purchase_key' AND meta_value = %s LIMIT 1", $key ) );
+	$meta_table = __give_v20_bc_table_details( 'payment' );
+
+	$purchase = $wpdb->get_var(
+		$wpdb->prepare(
+			"
+				SELECT {$meta_table['column']['id']}
+				FROM {$meta_table['name']}
+				WHERE meta_key = '_give_payment_purchase_key'
+				AND meta_value = %s
+				ORDER BY {$meta_table['column']['id']} DESC
+				LIMIT 1
+				",
+			$key
+		)
+	);
+
+	if ( $purchase != null ) {
+		return $purchase;
+	}
+
+	return 0;
+}
+
+
+/**
+ * Retrieve the donation ID based on the transaction ID
+ *
+ * @param string  $key  The transaction ID to search for.
+ *
+ * @since 1.3
+ * @global object $wpdb Used to query the database using the WordPress Database API.
+ *
+ * @return int $purchase Donation ID.
+ */
+function give_get_purchase_id_by_transaction_id( $key ) {
+	global $wpdb;
+	$meta_table = __give_v20_bc_table_details( 'payment' );
+
+	$purchase = $wpdb->get_var( $wpdb->prepare( "SELECT {$meta_table['column']['id']} FROM {$meta_table['name']} WHERE meta_key = '_give_payment_transaction_id' AND meta_value = %s LIMIT 1", $key ) );
 
 	if ( $purchase != null ) {
 		return $purchase;
@@ -1270,14 +1399,14 @@ function give_get_purchase_id_by_key( $key ) {
 }
 
 /**
- * Retrieve all notes attached to a purchase
+ * Retrieve all notes attached to a donation
+ *
+ * @param int    $payment_id The donation ID to retrieve notes for.
+ * @param string $search     Search for notes that contain a search term.
  *
  * @since 1.0
  *
- * @param int    $payment_id The payment ID to retrieve notes for
- * @param string $search     Search for notes that contain a search term
- *
- * @return array $notes Payment Notes
+ * @return array $notes Donation Notes
  */
 function give_get_payment_notes( $payment_id = 0, $search = '' ) {
 
@@ -1286,9 +1415,13 @@ function give_get_payment_notes( $payment_id = 0, $search = '' ) {
 	}
 
 	remove_action( 'pre_get_comments', 'give_hide_payment_notes', 10 );
-	remove_filter( 'comments_clauses', 'give_hide_payment_notes_pre_41', 10, 2 );
+	remove_filter( 'comments_clauses', 'give_hide_payment_notes_pre_41', 10 );
 
-	$notes = get_comments( array( 'post_id' => $payment_id, 'order' => 'ASC', 'search' => $search ) );
+	$notes = get_comments( array(
+		'post_id' => $payment_id,
+		'order'   => 'ASC',
+		'search'  => $search,
+	) );
 
 	add_action( 'pre_get_comments', 'give_hide_payment_notes', 10 );
 	add_filter( 'comments_clauses', 'give_hide_payment_notes_pre_41', 10, 2 );
@@ -1300,10 +1433,10 @@ function give_get_payment_notes( $payment_id = 0, $search = '' ) {
 /**
  * Add a note to a payment
  *
- * @since 1.0
+ * @param int    $payment_id The payment ID to store a note for.
+ * @param string $note       The note to store.
  *
- * @param int    $payment_id The payment ID to store a note for
- * @param string $note       The note to store
+ * @since 1.0
  *
  * @return int The new note ID
  */
@@ -1312,6 +1445,14 @@ function give_insert_payment_note( $payment_id = 0, $note = '' ) {
 		return false;
 	}
 
+	/**
+	 * Fires before inserting payment note.
+	 *
+	 * @param int    $payment_id Payment ID.
+	 * @param string $note       The note.
+	 *
+	 * @since 1.0
+	 */
 	do_action( 'give_pre_insert_payment_note', $payment_id, $note );
 
 	$note_id = wp_insert_comment( wp_filter_comment( array(
@@ -1326,10 +1467,19 @@ function give_insert_payment_note( $payment_id = 0, $note = '' ) {
 		'comment_author_IP'    => '',
 		'comment_author_url'   => '',
 		'comment_author_email' => '',
-		'comment_type'         => 'give_payment_note'
+		'comment_type'         => 'give_payment_note',
 
 	) ) );
 
+	/**
+	 * Fires after payment note inserted.
+	 *
+	 * @param int    $note_id    Note ID.
+	 * @param int    $payment_id Payment ID.
+	 * @param string $note       The note.
+	 *
+	 * @since 1.0
+	 */
 	do_action( 'give_insert_payment_note', $note_id, $payment_id, $note );
 
 	return $note_id;
@@ -1338,20 +1488,38 @@ function give_insert_payment_note( $payment_id = 0, $note = '' ) {
 /**
  * Deletes a payment note
  *
+ * @param int $comment_id The comment ID to delete.
+ * @param int $payment_id The payment ID the note is connected to.
+ *
  * @since 1.0
  *
- * @param int $comment_id The comment ID to delete
- * @param int $payment_id The payment ID the note is connected to
- *
- * @return bool True on success, false otherwise
+ * @return bool True on success, false otherwise.
  */
 function give_delete_payment_note( $comment_id = 0, $payment_id = 0 ) {
 	if ( empty( $comment_id ) ) {
 		return false;
 	}
 
+	/**
+	 * Fires before deleting donation note.
+	 *
+	 * @param int $comment_id Note ID.
+	 * @param int $payment_id Payment ID.
+	 *
+	 * @since 1.0
+	 */
 	do_action( 'give_pre_delete_payment_note', $comment_id, $payment_id );
+
 	$ret = wp_delete_comment( $comment_id, true );
+
+	/**
+	 * Fires after donation note deleted.
+	 *
+	 * @param int $comment_id Note ID.
+	 * @param int $payment_id Payment ID.
+	 *
+	 * @since 1.0
+	 */
 	do_action( 'give_post_delete_payment_note', $comment_id, $payment_id );
 
 	return $ret;
@@ -1360,10 +1528,10 @@ function give_delete_payment_note( $comment_id = 0, $payment_id = 0 ) {
 /**
  * Gets the payment note HTML
  *
- * @since 1.0
+ * @param object|int $note       The comment object or ID.
+ * @param int        $payment_id The payment ID the note is connected to.
  *
- * @param     object      /int $note The comment object or ID
- * @param int $payment_id The payment ID the note is connected to
+ * @since 1.0
  *
  * @return string
  */
@@ -1380,19 +1548,19 @@ function give_get_payment_note_html( $note, $payment_id = 0 ) {
 		$user = __( 'System', 'give' );
 	}
 
-	$date_format = get_option( 'date_format' ) . ', ' . get_option( 'time_format' );
+	$date_format = give_date_format() . ', ' . get_option( 'time_format' );
 
 	$delete_note_url = wp_nonce_url( add_query_arg( array(
 		'give-action' => 'delete_payment_note',
 		'note_id'     => $note->comment_ID,
-		'payment_id'  => $payment_id
+		'payment_id'  => $payment_id,
 	) ), 'give_delete_payment_note_' . $note->comment_ID );
 
 	$note_html = '<div class="give-payment-note" id="give-payment-note-' . $note->comment_ID . '">';
 	$note_html .= '<p>';
 	$note_html .= '<strong>' . $user . '</strong>&nbsp;&ndash;&nbsp;<span style="color:#aaa;font-style:italic;">' . date_i18n( $date_format, strtotime( $note->comment_date ) ) . '</span><br/>';
 	$note_html .= $note->comment_content;
-	$note_html .= '&nbsp;&ndash;&nbsp;<a href="' . esc_url( $delete_note_url ) . '" class="give-delete-payment-note" data-note-id="' . absint( $note->comment_ID ) . '" data-payment-id="' . absint( $payment_id ) . '" title="' . __( 'Delete this payment note', 'give' ) . '">' . __( 'Delete', 'give' ) . '</a>';
+	$note_html .= '&nbsp;&ndash;&nbsp;<a href="' . esc_url( $delete_note_url ) . '" class="give-delete-payment-note" data-note-id="' . absint( $note->comment_ID ) . '" data-payment-id="' . absint( $payment_id ) . '" aria-label="' . __( 'Delete this donation note.', 'give' ) . '">' . __( 'Delete', 'give' ) . '</a>';
 	$note_html .= '</p>';
 	$note_html .= '</div>';
 
@@ -1404,16 +1572,14 @@ function give_get_payment_note_html( $note, $payment_id = 0 ) {
  * Exclude notes (comments) on give_payment post type from showing in Recent
  * Comments widgets
  *
- * @since 1.0
+ * @param object $query WordPress Comment Query Object.
  *
- * @param obj $query WordPress Comment Query Object
+ * @since 1.0
  *
  * @return void
  */
 function give_hide_payment_notes( $query ) {
-	global $wp_version;
-
-	if ( version_compare( floatval( $wp_version ), '4.1', '>=' ) ) {
+	if ( version_compare( floatval( get_bloginfo( 'version' ) ), '4.1', '>=' ) ) {
 		$types = isset( $query->query_vars['type__not_in'] ) ? $query->query_vars['type__not_in'] : array();
 		if ( ! is_array( $types ) ) {
 			$types = array( $types );
@@ -1428,17 +1594,15 @@ add_action( 'pre_get_comments', 'give_hide_payment_notes', 10 );
 /**
  * Exclude notes (comments) on give_payment post type from showing in Recent Comments widgets
  *
+ * @param array  $clauses          Comment clauses for comment query.
+ * @param object $wp_comment_query WordPress Comment Query Object.
+ *
  * @since 1.0
  *
- * @param array $clauses          Comment clauses for comment query
- * @param obj   $wp_comment_query WordPress Comment Query Object
- *
- * @return array $clauses Updated comment clauses
+ * @return array $clauses Updated comment clauses.
  */
 function give_hide_payment_notes_pre_41( $clauses, $wp_comment_query ) {
-	global $wpdb, $wp_version;
-
-	if ( version_compare( floatval( $wp_version ), '4.1', '<' ) ) {
+	if ( version_compare( floatval( get_bloginfo( 'version' ) ), '4.1', '<' ) ) {
 		$clauses['where'] .= ' AND comment_type != "give_payment_note"';
 	}
 
@@ -1451,17 +1615,17 @@ add_filter( 'comments_clauses', 'give_hide_payment_notes_pre_41', 10, 2 );
 /**
  * Exclude notes (comments) on give_payment post type from showing in comment feeds
  *
+ * @param string $where
+ * @param object $wp_comment_query WordPress Comment Query Object.
+ *
  * @since 1.0
  *
- * @param array $where
- * @param obj   $wp_comment_query WordPress Comment Query Object
- *
- * @return array $where
+ * @return string $where
  */
 function give_hide_payment_notes_from_feeds( $where, $wp_comment_query ) {
 	global $wpdb;
 
-	$where .= $wpdb->prepare( " AND comment_type != %s", 'give_payment_note' );
+	$where .= $wpdb->prepare( ' AND comment_type != %s', 'give_payment_note' );
 
 	return $where;
 }
@@ -1472,13 +1636,13 @@ add_filter( 'comment_feed_where', 'give_hide_payment_notes_from_feeds', 10, 2 );
 /**
  * Remove Give Comments from the wp_count_comments function
  *
+ * @param array $stats   (empty from core filter).
+ * @param int   $post_id Post ID.
+ *
  * @access public
  * @since  1.0
  *
- * @param array $stats   (empty from core filter)
- * @param int   $post_id Post ID
- *
- * @return array Array of comment counts
+ * @return array|object Array of comment counts.
  */
 function give_remove_payment_notes_in_comment_counts( $stats, $post_id ) {
 	global $wpdb, $pagenow;
@@ -1493,16 +1657,16 @@ function give_remove_payment_notes_in_comment_counts( $stats, $post_id ) {
 		return $stats;
 	}
 
-	$stats = wp_cache_get( "comments-{$post_id}", 'counts' );
+	$stats = Give_Cache::get_group( "comments-{$post_id}", 'counts' );
 
-	if ( false !== $stats ) {
+	if ( ! is_null( $stats ) ) {
 		return $stats;
 	}
 
 	$where = 'WHERE comment_type != "give_payment_note"';
 
 	if ( $post_id > 0 ) {
-		$where .= $wpdb->prepare( " AND comment_post_ID = %d", $post_id );
+		$where .= $wpdb->prepare( ' AND comment_post_ID = %d', $post_id );
 	}
 
 	$count = $wpdb->get_results( "SELECT comment_approved, COUNT( * ) AS num_comments FROM {$wpdb->comments} {$where} GROUP BY comment_approved", ARRAY_A );
@@ -1513,10 +1677,10 @@ function give_remove_payment_notes_in_comment_counts( $stats, $post_id ) {
 		'1'            => 'approved',
 		'spam'         => 'spam',
 		'trash'        => 'trash',
-		'post-trashed' => 'post-trashed'
+		'post-trashed' => 'post-trashed',
 	);
 	foreach ( (array) $count as $row ) {
-		// Don't count post-trashed toward totals
+		// Don't count post-trashed toward totals.
 		if ( 'post-trashed' != $row['comment_approved'] && 'trash' != $row['comment_approved'] ) {
 			$total += $row['num_comments'];
 		}
@@ -1533,7 +1697,7 @@ function give_remove_payment_notes_in_comment_counts( $stats, $post_id ) {
 	}
 
 	$stats = (object) $stats;
-	wp_cache_set( "comments-{$post_id}", $stats, 'counts' );
+	Give_Cache::set_group( "comments-{$post_id}", $stats, 'counts' );
 
 	return $stats;
 }
@@ -1544,15 +1708,15 @@ add_filter( 'wp_count_comments', 'give_remove_payment_notes_in_comment_counts', 
 /**
  * Filter where older than one week
  *
+ * @param string $where Where clause.
+ *
  * @access public
  * @since  1.0
  *
- * @param string $where Where clause
- *
- * @return string $where Modified where clause
+ * @return string $where Modified where clause.
  */
 function give_filter_where_older_than_week( $where = '' ) {
-	// Payments older than one week
+	// Payments older than one week.
 	$start = date( 'Y-m-d', strtotime( '-7 days' ) );
 	$where .= " AND post_date <= '{$start}'";
 
@@ -1561,69 +1725,251 @@ function give_filter_where_older_than_week( $where = '' ) {
 
 
 /**
+ * Get Payment Form ID.
+ *
+ * Retrieves the form title and appends the level name if present.
+ *
+ * @param int|Give_Payment $donation Donation Data Object.
+ * @param array            $args     a. only_level = If set to true will only return the level name if multi-level enabled.
+ *                                   b. separator  = The separator between the Form Title and the Donation Level.
+ *
+ * @since 1.5
+ *
+ * @return string $form_title Returns the full title if $only_level is false, otherwise returns the levels title.
+ */
+function give_get_donation_form_title( $donation, $args = array() ) {
+
+	if ( ! $donation instanceof Give_Payment ) {
+		$donation = new Give_Payment( $donation );
+	}
+
+	if( ! $donation->ID ) {
+		return '';
+	}
+
+	$defaults = array(
+		'only_level' => false,
+		'separator'  => '',
+	);
+
+	$args = wp_parse_args( $args, $defaults );
+
+	$form_id     = $donation->form_id;
+	$price_id    = $donation->price_id;
+	$form_title  = $donation->form_title;
+	$only_level  = $args['only_level'];
+	$separator   = $args['separator'];
+	$level_label = '';
+
+	$cache_key = Give_Cache::get_key(
+		'give_forms',
+		array(
+			$form_id,
+			$price_id,
+			$form_title,
+			$only_level,
+			$separator
+		)
+		, false
+	);
+
+	$form_title_html = Give_Cache::get_db_query( $cache_key );
+
+	if ( is_null( $form_title_html ) ) {
+		if ( true === $only_level ) {
+			$form_title = '';
+		}
+
+		$form_title_html = $form_title;
+
+		if ( 'custom' === $price_id ) {
+
+			$custom_amount_text = give_get_meta( $form_id, '_give_custom_amount_text', true );
+			$level_label        = ! empty( $custom_amount_text ) ? $custom_amount_text : __( 'Custom Amount', 'give' );
+
+			// Show custom amount level only in backend otherwise hide it.
+			if( 'set' === give_get_meta( $form_id, '_give_price_option', true ) && ! is_admin()  ) {
+				$level_label = '';
+			}
+
+		} elseif ( give_has_variable_prices( $form_id ) ) {
+			$level_label = give_get_price_option_name( $form_id, $price_id, $donation->ID, false );
+		}
+
+		// Only add separator if there is a form title.
+		if (
+			! empty( $form_title_html ) &&
+			! empty( $level_label )
+		) {
+			$form_title_html .= " {$separator} ";
+		}
+
+		$form_title_html .= "<span class=\"donation-level-text-wrap\">{$level_label}</span>";
+		Give_Cache::set_db_query( $cache_key, $form_title_html );
+	}
+
+	/**
+	 * Filter form title with level html
+	 *
+	 * @since 1.0
+	 */
+	return apply_filters( 'give_get_donation_form_title', $form_title_html, $donation->payment_meta, $donation );
+}
+
+/**
  * Get Price ID
  *
- * @description Retrieves the Price ID given a proper form ID and price (donation) total
+ * Retrieves the Price ID when provided a proper form ID and price (donation) total
  *
- * @param $form_id
- * @param $price
+ * @param int    $form_id Form ID.
+ * @param string $price   Donation Amount.
  *
  * @return string $price_id
  */
 function give_get_price_id( $form_id, $price ) {
-
-	$price_id = 0;
+	$price_id = null;
 
 	if ( give_has_variable_prices( $form_id ) ) {
 
-		$levels = maybe_unserialize( get_post_meta( $form_id, '_give_donation_levels', true ) );
+		$levels = give_get_meta( $form_id, '_give_donation_levels', true );
 
 		foreach ( $levels as $level ) {
 
-			$level_amount = (float) give_sanitize_amount( $level['_give_amount'] );
+			$level_amount = give_maybe_sanitize_amount( $level['_give_amount'] );
 
-			//check that this indeed the recurring price
+			// Check that this indeed the recurring price.
 			if ( $level_amount == $price ) {
 
 				$price_id = $level['_give_id']['level_id'];
+				break;
 
 			}
-
 		}
 
+		if ( is_null( $price_id ) && give_is_custom_price_mode( $form_id ) ) {
+			$price_id = 'custom';
+		}
 	}
 
-	return $price_id;
+	// Price ID must be numeric or string.
+	$price_id = ! is_numeric( $price_id ) && ! is_string( $price_id ) ? 0 : $price_id;
 
+	/**
+	 * Filter the price id
+	 *
+	 * @since 2.0
+	 *
+	 * @param string $price_id
+	 * @param int    $form_id
+	 */
+	return apply_filters( 'give_get_price_id', $price_id, $form_id );
 }
 
 /**
- * Retrieves arbitrary fees for the donation (Currently not in use!!)
- * @TODO  - Incorporate a fee-based functionality similar to below
- * @since 1.0
+ * Get/Print give form dropdown html
  *
- * @param int    $payment_id Payment ID
- * @param string $type       Fee type
+ * This function is wrapper to public method forms_dropdown of Give_HTML_Elements class to get/print form dropdown html.
+ * Give_HTML_Elements is defined in includes/class-give-html-elements.php.
  *
- * @return mixed array if payment fees found, false otherwise
+ * @param array $args Arguments for form dropdown.
+ * @param bool  $echo This parameter decides if print form dropdown html output or not.
+ *
+ * @since 1.6
+ *
+ * @return string
  */
-function give_get_payment_fees( $payment_id = 0, $type = 'all' ) {
-	$payment_meta = give_get_payment_meta( $payment_id );
-	$fees         = array();
-	$payment_fees = isset( $payment_meta['fees'] ) ? $payment_meta['fees'] : false;
-	if ( ! empty( $payment_fees ) && is_array( $payment_fees ) ) {
-		foreach ( $payment_fees as $fee_id => $fee ) {
-			if ( 'all' != $type && ! empty( $fee['type'] ) && $type != $fee['type'] ) {
-				unset( $payment_fees[ $fee_id ] );
-			} else {
-				$fees[] = array(
-					'id'     => $fee_id,
-					'amount' => $fee['amount'],
-					'label'  => $fee['label']
-				);
-			}
-		}
+function give_get_form_dropdown( $args = array(), $echo = false ) {
+	$form_dropdown_html = Give()->html->forms_dropdown( $args );
+
+	if ( ! $echo ) {
+		return $form_dropdown_html;
 	}
 
-	return apply_filters( 'give_get_payment_fees', $fees, $payment_id );
+	echo $form_dropdown_html;
+}
+
+/**
+ * Get/Print give form variable price dropdown html
+ *
+ * @param array $args Arguments for form dropdown.
+ * @param bool  $echo This parameter decide if print form dropdown html output or not.
+ *
+ * @since 1.6
+ *
+ * @return string|bool
+ */
+function give_get_form_variable_price_dropdown( $args = array(), $echo = false ) {
+
+	// Check for give form id.
+	if ( empty( $args['id'] ) ) {
+		return false;
+	}
+
+	$form = new Give_Donate_Form( $args['id'] );
+
+	// Check if form has variable prices or not.
+	if ( ! $form->ID || ! $form->has_variable_prices() ) {
+		return false;
+	}
+
+	$variable_prices        = $form->get_prices();
+	$variable_price_options = array();
+
+	// Check if multi donation form support custom donation or not.
+	if ( $form->is_custom_price_mode() ) {
+		$variable_price_options['custom'] = _x( 'Custom', 'custom donation dropdown item', 'give' );
+	}
+
+	// Get variable price and ID from variable price array.
+	foreach ( $variable_prices as $variable_price ) {
+		$variable_price_options[ $variable_price['_give_id']['level_id'] ] = ! empty( $variable_price['_give_text'] ) ? $variable_price['_give_text'] : give_currency_filter( give_format_amount( $variable_price['_give_amount'], array( 'sanitize' => false ) ) );
+	}
+
+	// Update options.
+	$args = array_merge( $args, array(
+		'options' => $variable_price_options,
+	) );
+
+	// Generate select html.
+	$form_dropdown_html = Give()->html->select( $args );
+
+	if ( ! $echo ) {
+		return $form_dropdown_html;
+	}
+
+	echo $form_dropdown_html;
+}
+
+/**
+ * Get the price_id from the payment meta.
+ *
+ * Some gateways use `give_price_id` and others were using just `price_id`;
+ * This checks for the difference and falls back to retrieving it from the form as a last resort.
+ *
+ * @param array $payment_meta Payment Meta.
+ *
+ * @since 1.8.6
+ *
+ * @return string
+ */
+function give_get_payment_meta_price_id( $payment_meta ) {
+
+	if ( isset( $payment_meta['give_price_id'] ) ) {
+		$price_id = $payment_meta['give_price_id'];
+	} elseif ( isset( $payment_meta['price_id'] ) ) {
+		$price_id = $payment_meta['price_id'];
+	} else {
+		$price_id = give_get_price_id( $payment_meta['give_form_id'], $payment_meta['price'] );
+	}
+
+	/**
+	 * Filter the price id
+	 *
+	 * @since 1.8.6
+	 *
+	 * @param string $price_id
+	 * @param array  $payment_meta
+	 */
+	return apply_filters( 'give_get_payment_meta_price_id', $price_id, $payment_meta );
+
 }

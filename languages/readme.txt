@@ -1,18 +1,16 @@
 ********************************************************
 
-  Give I18n
+  Give i18n
   ============================
   
   Do not put custom translations here. They will be deleted
   on Give updates.
-  
-  Keep custom Give translations in /wp-content/languages/give/
-  
-  You want to translate, help, or improve a translation.
-  
-  Join our WP-Translations Community at
-  https://www.transifex.com/projects/p/give/
 
-  More info at http://wp-translations.org/
+  Keep custom Give translations in /wp-content/languages/give/
+
+  If you would like to translate, help, or improve a translation.
+
+  Email info@wordmpress.com OR join the GlotPress community:
+  https://translate.wordpress.org/projects/wp-plugins/give
 
 ********************************************************

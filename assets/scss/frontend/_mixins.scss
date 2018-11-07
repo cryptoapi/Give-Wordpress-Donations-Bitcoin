@@ -6,12 +6,12 @@
 
   &:before,
   &:after {
-	content: " ";
-	display: table;
+    content: " ";
+    display: table;
   }
 
   &:after {
-	clear: both;
+    clear: both;
   }
 }
 
@@ -38,46 +38,28 @@
   transition: 0.2s all linear;
 }
 
-//Swingin' Loader (from Woo 2.3)
-@mixin loader() {
-  &:before {
-	height: 1em;
-	width: 1em;
-	display: block;
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin-left: -.5em;
-	margin-top: -.5em;
-	display: block;
-	-webkit-animation: spin 1s ease-in-out infinite;
-	-moz-animation: spin 1s ease-in-out infinite;
-	animation: spin 1s ease-in-out infinite;
-	content: "";
-	background: url(../images/loader.svg) center center;
-	background-size: cover;
-	line-height: 1;
-	text-align: center;
-	font-size: 2em;
-	color: rgba(#000, 0.75);
-  }
-}
-
 //Labels
 @mixin give-label() {
-  padding: .2em .6em .3em;
-  font-size: 85%;
-  font-weight: 700;
+  padding: .2em .4em .3em;
+  font-size: 11px;
   line-height: 1;
   color: #fff;
   text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
   border-radius: .25em;
+  
+  &:hover {
+    color:#fff;
+    text-decoration: none;
+  }
 }
 
 @mixin give-label-gray() {
   background-color: #929292;
+}
+@mixin give-label-orange() {
+  background-color: #ffba00;
 }
 
 .give-item-label {
@@ -88,14 +70,23 @@
   @include give-label-gray();
 }
 
+.give-item-label-orange {
+  @include give-label-orange();
+}
+
+
+.give-item-label {
+  @include give-label();
+}
+
 //Fields
 @mixin give-currency() {
   background-color: lighten($light-gray, 2%);
   border-top: 1px solid $borders;
   border-bottom: 1px solid $borders;
+  color: $dark;
   margin: 0;
   padding: 0 12px;
-  float: left;
   height: 35px;
   line-height: 35px;
   font-size: $font-size-medium;
@@ -103,12 +94,13 @@
 }
 
 @mixin give-input() {
-  float: left;
   border: 1px solid $borders;
+  background: #FFF;
   border-radius: 0;
   height: 35px;
   line-height: 35px;
   padding: 0 12px;
+  margin: 0;
   font-size: $font-size-medium;
   @include box-sizing(border-box);
 }

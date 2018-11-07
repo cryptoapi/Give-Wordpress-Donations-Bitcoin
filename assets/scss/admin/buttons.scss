@@ -1,0 +1,62 @@
+/**
+ * Give Admin Buttons SCSS
+ *
+ * @package     Give
+ * @subpackage  SCSS/Admin
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+*/
+
+/*=Give Shortcode Button
+--------------------------------------*/
+
+@media screen and (max-width: 782px) {
+  #wp-content-media-buttons a.give-thickbox {
+    padding: 6px 14px;
+    line-height: normal;
+    font-size: 14px;
+    height: auto;
+  }
+  .wp-media-buttons span#give-media-button {
+      margin-top: 0 !important;
+      margin-left: 2px !important;
+  }
+}
+
+/*=Button in shortcode tinymce dialog
+--------------------------------------*/
+
+.mce-primary.mce-give-primary button {
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+/*=Admin Buttons w/ Icons
+--------------------------------------*/
+
+/* extends .wp-core-ui .button */
+.wp-core-ui .give-admin-button {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+/* matches style of Add Media and Give Shortcodes buttons */
+.give-admin-button-icon {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  vertical-align: text-top;
+  margin: 0 2px;
+
+  &:before {
+    font: 400 18px/1 dashicons;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* specific DashIcon styles */
+  &-update:before {
+    content: "\f463";
+  }
+}

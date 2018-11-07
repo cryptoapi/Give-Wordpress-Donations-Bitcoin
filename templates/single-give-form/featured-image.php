@@ -2,42 +2,54 @@
 /**
  * Single Form Featured Image
  *
+ * Displays the featured image for the single donation form - Override this template by copying it to yourtheme/give/single-give-form/featured-image.php
+ * 
  * @package       Give/Templates
- * @version       1.0
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
+ * @since       1.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly
+	exit; // Exit if accessed directly.
 }
 
 global $post;
 
 /**
- * Fires before the featured thumbnail
- * 
+ * Fires in single form template, before the form featured image.
+ *
+ * Allows you to add elements before the image.
+ *
  * @since 1.0
- */ 
+ */
 do_action( 'give_pre_featured_thumbnail' );
 ?>
+
 <div class="images">
-
-	<?php
+	<?php //Featured Thumbnail
 	if ( has_post_thumbnail() ) {
+		
+		$image_size = give_get_option( 'featured_image_size' );
+		$image      = get_the_post_thumbnail( $post->ID, apply_filters( 'single_give_form_large_thumbnail_size', ( ! empty( $image_size ) ? $image_size : 'large' ) ) );
 
-		$image_title = esc_attr( get_the_title( get_post_thumbnail_id() ) );
-		$image_link  = wp_get_attachment_url( get_post_thumbnail_id() );
-		$image       = get_the_post_thumbnail( $post->ID, apply_filters( 'single_give_form_large_thumbnail_size', 'give_form_single' ), array(
-			'title' => $image_title
-		) );
-
-		echo apply_filters( 'single_give_form_image_html', sprintf( '<a href="%s" itemprop="image" class="give-main-image" title="%s">%s</a>', $image_link, $image_title, $image ), $post->ID );
+		echo apply_filters( 'single_give_form_image_html', $image );
 
 	} else {
 
-		echo apply_filters( 'single_give_form_image_html', sprintf( '<img src="%s" alt="%s" />', give_get_placeholder_img_src(), __( 'Placeholder', 'give' ) ), $post->ID );
+		//Placeholder Image
+		echo apply_filters( 'single_give_form_image_html', sprintf( '<img src="%s" alt="%s" />', give_get_placeholder_img_src(), esc_attr__( 'Placeholder', 'give' ) ), $post->ID );
 
-	}
-	?>
+	} ?>
 </div>
 
-<?php do_action( 'give_post_featured_thumbnail' ); ?>
+<?php
+/**
+ * Fires in single form template, after the form featured image.
+ *
+ * Allows you to add elements after the image.
+ *
+ * @since 1.0
+ */
+do_action( 'give_post_featured_thumbnail' );
+?>

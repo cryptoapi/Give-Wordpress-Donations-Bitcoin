@@ -4,58 +4,15 @@
  *
  * @package     Give
  * @subpackage  Functions/Errors
- * @copyright   Copyright (c) 2015, WordImpress
- * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
+ * @copyright   Copyright (c) 2016, WordImpress
+ * @license     https://opensource.org/licenses/gpl-license GNU Public License
  * @since       1.0
  */
 
-// Exit if accessed directly
+// Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
-
-/**
- * Print Errors
- *
- * Prints all stored errors. For use during checkout.
- * If errors exist, they are returned.
- *
- * @since 1.0
- * @uses  give_get_errors()
- * @uses  give_clear_errors()
- *
- * @param int $form_id
- *
- * @return void
- */
-function give_print_errors( $form_id ) {
-
-	$errors = give_get_errors();
-
-	//Ensure errors show up on the appropriate form
-	if ( ! isset( $_POST['give_ajax'] ) && isset( $_POST['give-form-id'] ) && intval( $_POST['give-form-id'] ) !== $form_id ) {
-		return;
-	} elseif ( ! isset( $_POST['give_ajax'] ) && isset( $_REQUEST['form_id'] ) && intval( $_REQUEST['form_id'] ) !== $form_id ) {
-		return;
-	}
-
-	if ( $errors ) {
-		$classes = apply_filters( 'give_error_class', array(
-			'give_errors'
-		) );
-		echo '<div class="' . implode( ' ', $classes ) . '">';
-		// Loop error codes and display errors
-		foreach ( $errors as $error_id => $error ) {
-			echo '<div class="give_error" id="give_error_' . $error_id . '"><p><strong>' . __( 'Error', 'give' ) . '</strong>: ' . $error . '</p></div>';
-		}
-		echo '</div>';
-		give_clear_errors();
-	}
-}
-
-add_action( 'give_purchase_form_before_personal_info', 'give_print_errors' );
-add_action( 'give_ajax_checkout_errors', 'give_print_errors' );
 
 /**
  * Get Errors
@@ -65,7 +22,7 @@ add_action( 'give_ajax_checkout_errors', 'give_print_errors' );
  *
  * @since 1.0
  * @uses  Give_Session::get()
- * @return mixed array if errors are present, false if none found
+ * @return array|bool array if errors are present, false if none found
  */
 function give_get_errors() {
 	return Give()->session->get( 'give_errors' );
@@ -79,17 +36,28 @@ function give_get_errors() {
  * @since 1.0
  * @uses  Give_Session::get()
  *
- * @param int    $error_id      ID of the error being set
- * @param string $error_message Message to store with the error
+ * @param int    $error_id      ID of the error being set.
+ * @param string $error_message Message to store with the error.
+ * @param array  $notice_args
  *
  * @return void
  */
-function give_set_error( $error_id, $error_message ) {
+function give_set_error( $error_id, $error_message, $notice_args = array() ) {
 	$errors = give_get_errors();
 	if ( ! $errors ) {
 		$errors = array();
 	}
-	$errors[ $error_id ] = $error_message;
+
+	if( is_array( $notice_args ) && ! empty( $notice_args ) ) {
+		$errors[ $error_id ] = array(
+			'message'     => $error_message,
+			'notice_args' => $notice_args,
+		);
+	} else {
+		// Backward compatibility v<1.8.11.
+		$errors[ $error_id ] = $error_message;
+	}
+
 	Give()->session->set( 'give_errors', $errors );
 }
 
@@ -110,14 +78,22 @@ function give_clear_errors() {
  * @since 1.0
  * @uses  Give_Session::set()
  *
- * @param int $error_id ID of the error being set
+ * @param int $error_id ID of the error being set.
  *
- * @return string
+ * @return void
  */
 function give_unset_error( $error_id ) {
 	$errors = give_get_errors();
 	if ( $errors ) {
-		unset( $errors[ $error_id ] );
+		/**
+		 * Check If $error_id exists in the array.
+		 * If exists then unset it.
+		 *
+		 * @since 1.8.13
+		 */
+		if ( isset( $errors[ $error_id ] ) ) {
+			unset( $errors[ $error_id ] );
+		}
 		Give()->session->set( 'give_errors', $errors );
 	}
 }
@@ -126,7 +102,7 @@ function give_unset_error( $error_id ) {
  * Register die handler for give_die()
  *
  * @since  1.0
- * @return void
+ * @return string
  */
 function _give_die_handler() {
 	if ( defined( 'GIVE_UNIT_TESTS' ) ) {
@@ -141,7 +117,12 @@ function _give_die_handler() {
  * kills execution of the script using wp_die(). This allows us to then to work
  * with functions using give_die() in the unit tests.
  *
- * @since  1.0
+ * @since 1.0
+ *
+ * @param string $message Message to store with the error.
+ * @param string $title   Error title.
+ * @param int    $status  HTTP status code..
+ *
  * @return void
  */
 function give_die( $message = '', $title = '', $status = 400 ) {
