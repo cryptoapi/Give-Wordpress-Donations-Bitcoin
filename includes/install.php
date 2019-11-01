@@ -317,7 +317,7 @@ function give_get_default_settings() {
 	$options = array(
 		// General.
 		'base_country'                                => 'US',
-		'test_mode'                                   => 'enabled',
+		'test_mode'                                   => 'disabled',
 		'currency'                                    => 'USD',
 		'currency_position'                           => 'before',
 		'session_lifetime'                            => '604800',
@@ -349,9 +349,9 @@ function give_get_default_settings() {
 		// Paypal IPN verification.
 		'paypal_verification'                         => 'enabled',
 
-		// Default is manual gateway.
-		'gateways'                                    => array( 'manual' => 1, 'offline' => 1 ),
-		'default_gateway'                             => 'manual',
+		// Default is gourl gateway.
+		'gateways'                                    => array( 'gourl' => 1, 'offline' => 1 ),
+		'default_gateway'                             => 'gourl',
 
 		// Offline gateway setup.
 		'global_offline_donation_content'             => give_get_default_offline_donation_content(),

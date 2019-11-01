@@ -4,9 +4,9 @@ Tags: donation, donations, donation plugin, wordpress donation plugin, bitcoin d
 Original Plugin URI: https://wordpress.org/plugins/give/
 Modified Plugin URI (Bitcoin support): https://github.com/cryptoapi/Give-Wordpress-Donations-Bitcoin
 Requires at least: 4.8
-Tested up to: 5.0
+Tested up to: 5.3
 Requires PHP: 5.3
-Stable tag: 2.0.6.1
+Stable tag: 2.0.6.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -214,6 +214,9 @@ Use Give for donations, and let WooCommerce or WP eCommerce or the like handle y
 11. Give has a dedicated support team to help answer any questions you may have and help you through stumbling blocks.
 
 == Changelog ==
+
+= 2.0.6.2: November 01, 2019  =
+* New: Several new enhancement 
 
 = 2.0.6.1: November 11, 2018  =
 * New: Added GoUrl Bitcoin Gateway Support
